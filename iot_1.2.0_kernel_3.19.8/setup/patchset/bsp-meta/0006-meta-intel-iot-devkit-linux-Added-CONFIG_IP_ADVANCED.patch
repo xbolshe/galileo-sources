@@ -1,0 +1,38 @@
+From 628b81e69e3fc44643f8db21d7d84776269939af Mon Sep 17 00:00:00 2001
+From: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+Date: Mon, 6 Apr 2015 16:15:13 +0800
+Subject: [PATCH 3/5] meta-intel-iot-devkit: linux: Added
+ CONFIG_IP_ADVANCED_ROUTER=m to netfilter-small-3.8.cfg
+
+Added CONFIG_IP_ADVANCED_ROUTER=m to netfilter-small-3.8.cfg.
+
+CONFIG_IP_MULTIPLE_TABLES requires CONFIG_IP_ADVANCED_ROUTER to be enabled in
+kernel configuration.
+
+Signed-off-by: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+---
+ .../linux/linux-yocto-quark/iot-devkit-spi/netfilter-small-3.8.cfg       | 1 +
+ .../linux/linux-yocto-quark/iot-devkit/netfilter-small-3.8.cfg           | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/netfilter-small-3.8.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/netfilter-small-3.8.cfg
+index 2def700..f87900f 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/netfilter-small-3.8.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/netfilter-small-3.8.cfg
+@@ -21,3 +21,4 @@
+ #CONFIG_NETFILTER_XT_CONNMARK=m
+ #CONFIG_NETFILTER_XT_TARGET_CONNMARK=m
+ #CONFIG_NETFILTER_XT_MATCH_CONNMARK=m
++#CONFIG_IP_ADVANCED_ROUTER=m
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/netfilter-small-3.8.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/netfilter-small-3.8.cfg
+index e9b71c4..69328b2 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/netfilter-small-3.8.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/netfilter-small-3.8.cfg
+@@ -21,3 +21,4 @@ CONFIG_NETFILTER_XT_MATCH_NFACCT=m
+ CONFIG_NETFILTER_XT_CONNMARK=m
+ CONFIG_NETFILTER_XT_TARGET_CONNMARK=m
+ CONFIG_NETFILTER_XT_MATCH_CONNMARK=m
++CONFIG_IP_ADVANCED_ROUTER=m
+-- 
+1.9.1
+

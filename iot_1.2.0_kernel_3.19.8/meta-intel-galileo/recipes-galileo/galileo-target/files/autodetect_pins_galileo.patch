@@ -1,0 +1,40 @@
+diff -uNr galileo-target-0.1/galileo-reset/galileo-reset.c galileo-target-0.1-systemd/galileo-reset/galileo-reset.c
+--- galileo-target-0.1/galileo-reset/galileo-reset.c	2015-02-11 16:09:35.150293575 +0000
++++ galileo-target-0.1-systemd/galileo-reset/galileo-reset.c	2015-02-11 16:21:32.176997160 +0000
+@@ -66,6 +66,25 @@
+ 	    }/* switch(arg) */
+     }
+ 
++    if ((input_gpio < 0) && (output_gpio < 0)) {
++      char *line = NULL;
++      size_t len = 0;
++      FILE *fh = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
++      if (fh != NULL) {
++        if (getline(&line, &len, fh) != -1) {
++          if (strncmp(line, "GalileoGen2", 11) == 0) {
++            input_gpio = 63;
++            output_gpio = 47;
++          }
++          else {
++            // assume gen1
++            input_gpio = 52;
++            output_gpio = 53;
++          }
++        }
++      }
++    }
++
+     if (input_gpio < 0){
+ 	    printf("Shield reset input GPIO invalid or not specified (%d)\n", input_gpio);
+ 	    exit(1);
+diff -uNr galileo-target-0.1/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh galileo-target-0.1-systemd/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh
+--- galileo-target-0.1/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh	2014-02-28 12:18:22.000000000 +0000
++++ galileo-target-0.1-systemd/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh	2015-02-11 16:10:21.286962622 +0000
+@@ -1,6 +1,3 @@
+ #!/bin/sh
+ 
+-
+-killall -HUP clloader
+-killall -TERM clloader
+-
++systemctl restart galileo-target.service

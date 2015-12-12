@@ -1,0 +1,58 @@
+From da5a355321b67c524f75fd6d93f2cf701bc1a12e Mon Sep 17 00:00:00 2001
+From: Ong Boon Leong <boon.leong.ong@intel.com>
+Date: Tue, 14 Oct 2014 21:17:43 +0800
+Subject: [PATCH] meta-iot-devkit: ensure SDHCI/MMC kernel driver are built as
+ module
+
+Ensure MMC & SDHCI kernel drivers are built as module.
+Also, make sure that initramfs are pre-installed with SDHCI/MMC
+kernel modules so that can be used to detect root file-system
+installed on SD card.
+
+Signed-off-by: Ong Boon Leong <boon.leong.ong@intel.com>
+---
+ .../images/core-image-minimal-initramfs.bbappend   |    1 +
+ .../iot-devkit-spi/enable_mmc.cfg                  |    9 ++++-----
+ .../linux-yocto-quark/iot-devkit/enable_mmc.cfg    |    9 ++++-----
+ 3 files changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/meta-intel-iot-devkit/recipes-core/images/core-image-minimal-initramfs.bbappend b/meta-intel-iot-devkit/recipes-core/images/core-image-minimal-initramfs.bbappend
+index 23e18d4..f450a37 100644
+--- a/meta-intel-iot-devkit/recipes-core/images/core-image-minimal-initramfs.bbappend
++++ b/meta-intel-iot-devkit/recipes-core/images/core-image-minimal-initramfs.bbappend
+@@ -5,3 +5,4 @@ PACKAGE_INSTALL = "initramfs-live-boot busybox base-passwd udev"
+ PACKAGE_INSTALL += "kernel-module-usb-storage"
+ PACKAGE_INSTALL += "kernel-module-ehci-hcd kernel-module-ehci-pci kernel-module-ohci-hcd"
+ PACKAGE_INSTALL += "kernel-module-stmmac"
++PACKAGE_INSTALL += "kernel-module-sdhci kernel-module-sdhci-pci kernel-module-mmc-block"
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/enable_mmc.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/enable_mmc.cfg
+index 447a832..95049e2 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/enable_mmc.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/enable_mmc.cfg
+@@ -1,5 +1,4 @@
+-CONFIG_MMC=y
+-CONFIG_MMC_BLOCK=y
+-CONFIG_MMC_SDHCI=y
+-CONFIG_MMC_SDHCI_PCI=y
+-CONFIG_MMC_SDHCI_PLTFM=y
++CONFIG_MMC=m
++CONFIG_MMC_BLOCK=m
++CONFIG_MMC_SDHCI=m
++CONFIG_MMC_SDHCI_PCI=m
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/enable_mmc.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/enable_mmc.cfg
+index 447a832..95049e2 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/enable_mmc.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/enable_mmc.cfg
+@@ -1,5 +1,4 @@
+-CONFIG_MMC=y
+-CONFIG_MMC_BLOCK=y
+-CONFIG_MMC_SDHCI=y
+-CONFIG_MMC_SDHCI_PCI=y
+-CONFIG_MMC_SDHCI_PLTFM=y
++CONFIG_MMC=m
++CONFIG_MMC_BLOCK=m
++CONFIG_MMC_SDHCI=m
++CONFIG_MMC_SDHCI_PCI=m
+-- 
+1.7.9.5
+

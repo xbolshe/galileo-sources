@@ -1,0 +1,43 @@
+From 99dddb2c29d06acaa8d111768b74381764531e0b Mon Sep 17 00:00:00 2001
+From: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+Date: Wed, 27 May 2015 17:07:56 +0800
+Subject: [PATCH] meta-intel-galileo: init: update board configuration files
+
+spi-pxa2xx module was renamed to spi-pxa2xx-platform in kernel version
+3.14. The board configuration files for Galileo and Galileo Gen2 need
+to have the module name updated. This will ensure the init process
+can be executed correctly.
+
+Signed-off-by: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+---
+ meta-intel-galileo/recipes-kernel/galileo-init/files/galileo.conf      | 2 +-
+ meta-intel-galileo/recipes-kernel/galileo-init/files/galileo_gen2.conf | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo.conf b/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo.conf
+index daed921..d382fd8 100644
+--- a/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo.conf
++++ b/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo.conf
+@@ -3,6 +3,6 @@ cy8c9540a
+ i2c_dev
+ spidev
+ spi-pxa2xx-pci
+-spi-pxa2xx
++spi-pxa2xx-platform
+ industrialio
+ ad7298
+diff --git a/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo_gen2.conf b/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo_gen2.conf
+index 45b9f8f..08d7263 100644
+--- a/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo_gen2.conf
++++ b/meta-intel-galileo/recipes-kernel/galileo-init/files/galileo_gen2.conf
+@@ -4,6 +4,6 @@ pca9685
+ i2c_dev
+ spidev
+ spi-pxa2xx-pci
+-spi-pxa2xx
++spi-pxa2xx-platform
+ industrialio
+ adc1x8s102
+-- 
+1.9.1
+

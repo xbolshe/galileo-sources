@@ -1,0 +1,277 @@
+From: Eugene Bolshakov <pub@relvarsoft.com>
+Date: Sun, 6 Dec 2015 10:36:12 +0300
+Subject: [PATCH 0002/9999] core: Quark patch
+
+Linux Kernel 3.19 patch for Intel Galileo Gen1/Gen2 board
+Source code is available on https://github.com/xbolshe/galileo-sources
+
+Signed-off-by: Eugene Bolshakov <pub@relvarsoft.com>
+
+
+Original source: 0007-core-Quark-patch-quark.patch
+---
+From xxxx Mon Sep 17 00:00:00 2001
+From: Bryan O'Donoghue <bryan.odonoghue@intel.com>
+Date: Wed, 16 Apr 2014 16:39:47 +0100
+Subject: [PATCH 07/26] core Quark patch
+---
+Modifications: changes for Linux Kernel 3.19
+
+ Kconfig |   29 ++++++++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -463,6 +463,18 @@ config X86_INTEL_CE
+ 	  This option compiles in support for the CE4100 SOC for settop
+ 	  boxes and media devices.
+
++config INTEL_QUARK_X1000_SOC
++	bool "Intel Quark X1000 SOC support"
++	depends on M586TSC
++	select ARCH_REQUIRE_GPIOLIB
++	select I2C
++	select COMMON_CLK
++	select IOSF_MBI
++	select OF
++	---help---
++	  Quark X1000 SOC support . This option enables probing for various
++	  PCI-IDs of several on-chip devices provided by the X1000
++
+ config X86_INTEL_MID
+ 	bool "Intel MID platform support"
+ 	depends on X86_32
+@@ -558,6 +570,14 @@ config X86_SUPPORTS_MEMORY_FAILURE
+ 	depends on X86_64 || !SPARSEMEM
+ 	select ARCH_SUPPORTS_MEMORY_FAILURE
+
++menu "Intel Media SOC Gen3 support"
++
++config ARCH_GEN3
++	bool "Enable Intel Media SOC Gen3 support"
++	default y
++
++endmenu
++
+ config STA2X11
+ 	bool "STA2X11 Companion Chip Support"
+ 	depends on X86_32_NON_STANDARD && PCI
+@@ -1263,7 +1283,7 @@ config ARCH_PHYS_ADDR_T_64BIT
+
+ config ARCH_DMA_ADDR_T_64BIT
+ 	def_bool y
+-	depends on X86_64 || HIGHMEM64G
++	depends on X86_64 || HIGHMEM64G && !INTEL_QUARK_X1000_SOC
+
+ config DIRECT_GBPAGES
+ 	bool "Enable 1GB pages for kernel pagetables" if EXPERT
+@@ -1660,6 +1680,13 @@ config EFI_MIXED
+
+ 	   If unsure, say N.
+
++config EFI_CAPSULE
++       tristate "EFI capsule update support"
++       depends on EFI
++       ---help---
++          This kernel feature allows for loading of EFI capsule code
++	  with callbacks into the EDK firmware to execute update
++
+ config SECCOMP
+ 	def_bool y
+ 	prompt "Enable seccomp to safely compute untrusted bytecode"
+
+ qrk.h |   78 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 78 insertions(+)
+
+diff --git a/arch/x86/include/asm/qrk.h b/arch/x86/include/asm/qrk.h
+new file mode 100644
+--- /dev/null
++++ b/arch/x86/include/asm/qrk.h
+@@ -0,0 +1,78 @@
++/*
++ * Copyright(c) 2013-2015 Intel Corporation.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ */
++#ifndef _ASM_X86_QRK_H
++#define _ASM_X86_QRK_H
++
++#include <linux/pci.h>
++#include <linux/msi.h>
++
++/**
++ * qrk_pci_pvm_mask
++ *
++ * Mask PVM bit on a per function basis. Quark SC components have but one
++ * vector each - so we mask for what we need
++ */
++static inline void qrk_pci_pvm_mask(struct pci_dev * dev)
++{
++	struct msi_desc *entry;
++	int mask_bits = 1;
++
++	if(unlikely(dev->msi_enabled == 0))
++		return;
++
++	entry = list_first_entry(&dev->msi_list, struct msi_desc, list);
++
++	if(unlikely(entry == NULL))
++		return;
++
++	pci_write_config_dword(dev, entry->mask_pos, mask_bits);
++}
++
++/**
++ * qrk_pci_pvm_mask
++ *
++ * UnMask PVM bit on a per function basis. Quark SC components have but one
++ * vector each - so we unmask for what we need
++ */
++static inline void qrk_pci_pvm_unmask(struct pci_dev * dev)
++{
++	struct msi_desc *entry;
++	int mask_bits = 0;
++
++	if(unlikely(dev->msi_enabled == 0))
++		return;
++
++	entry = list_first_entry(&dev->msi_list, struct msi_desc, list);
++
++	if(unlikely(entry == NULL))
++		return;
++
++	pci_write_config_dword(dev, entry->mask_pos, mask_bits);
++}
++
++/* Convienence macros */
++#if defined(CONFIG_INTEL_QUARK_X1000_SOC)
++       #define mask_pvm(x) qrk_pci_pvm_mask(x)
++       #define unmask_pvm(x) qrk_pci_pvm_unmask(x)
++#else
++       #define mask_pvm(x)
++       #define unmask_pvm(x)
++#endif
++
++/* Serial */
++#if defined(CONFIG_INTEL_QUARK_X1000_SOC)
++	#define SERIAL_PORT_DFNS
++	#define BASE_BAUD 2764800
++#endif
++
++#endif /* _ASM_X86_QRK_H */
+
+ serial.h |    6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/x86/include/asm/serial.h b/arch/x86/include/asm/serial.h
+--- a/arch/x86/include/asm/serial.h
++++ b/arch/x86/include/asm/serial.h
+@@ -1,6 +1,8 @@
+ #ifndef _ASM_X86_SERIAL_H
+ #define _ASM_X86_SERIAL_H
+
++#include <asm/qrk.h>
++
+ /*
+  * This assumes you have a 1.8432 MHz clock for your UART.
+  *
+@@ -8,7 +10,9 @@
+  * clock, since the 16550A is capable of handling a top speed of 1.5
+  * megabits/second; but this requires a faster clock.
+  */
++#ifndef BASE_BAUD
+ #define BASE_BAUD (1843200/16)
++#endif
+
+ /* Standard COM flags (except for COM4, because of the 8514 problem) */
+ #ifdef CONFIG_SERIAL_DETECT_IRQ
+@@ -19,11 +23,13 @@
+ # define STD_COM4_FLAGS	(ASYNC_BOOT_AUTOCONF |	0		| 0		)
+ #endif
+
++#ifndef SERIAL_PORT_DFNS
+ #define SERIAL_PORT_DFNS								\
+ 	/* UART		CLK		PORT	IRQ	FLAGS			    */	\
+ 	{ .uart = 0,	BASE_BAUD,	0x3F8,	4,	STD_COMX_FLAGS	}, /* ttyS0 */	\
+ 	{ .uart = 0,	BASE_BAUD,	0x2F8,	3,	STD_COMX_FLAGS	}, /* ttyS1 */	\
+ 	{ .uart = 0,	BASE_BAUD,	0x3E8,	4,	STD_COMX_FLAGS	}, /* ttyS2 */	\
+ 	{ .uart = 0,	BASE_BAUD,	0x2E8,	3,	STD_COM4_FLAGS	}, /* ttyS3 */
++#endif
+
+ #endif /* _ASM_X86_SERIAL_H */
+
+ efi-bgrt.c |   22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/arch/x86/platform/efi/efi-bgrt.c b/arch/x86/platform/efi/efi-bgrt.c
+--- a/arch/x86/platform/efi/efi-bgrt.c
++++ b/arch/x86/platform/efi/efi-bgrt.c
+@@ -25,19 +25,31 @@ struct bmp_header {
+ 	u32 size;
+ } __packed;
+
+-void __init efi_bgrt_init(void)
++bool __init efi_bgrt_probe(void)
+ {
+ 	acpi_status status;
+-	void __iomem *image;
+-	bool ioremapped = false;
+-	struct bmp_header bmp_header;
+
+ 	if (acpi_disabled)
+-		return;
++		return false;
+
++	bgrt_tab = NULL;
+ 	status = acpi_get_table("BGRT", 0,
+ 	                        (struct acpi_table_header **)&bgrt_tab);
++
+ 	if (ACPI_FAILURE(status))
++		return false;
++
++	return true;
++}
++
++
++void __init efi_bgrt_init(void)
++{
++	void __iomem *image;
++	bool ioremapped = false;
++	struct bmp_header bmp_header;
++
++	if (acpi_disabled || bgrt_tab == NULL)
+ 		return;
+
+ 	if (bgrt_tab->header.length < sizeof(*bgrt_tab)) {
+
+ efi-bgrt.h |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/linux/efi-bgrt.h b/include/linux/efi-bgrt.h
+--- a/include/linux/efi-bgrt.h
++++ b/include/linux/efi-bgrt.h
+@@ -6,6 +6,7 @@
+ #include <linux/acpi.h>
+
+ void efi_bgrt_init(void);
++bool efi_bgrt_probe(void);
+
+ /* The BGRT data itself; only valid if bgrt_image != NULL. */
+ extern void *bgrt_image;
+@@ -15,6 +16,7 @@ extern struct acpi_table_bgrt *bgrt_tab;
+ #else /* !CONFIG_ACPI_BGRT */
+
+ static inline void efi_bgrt_init(void) {}
++static inline bool efi_bgrt_probe(void) { return false; }
+
+ #endif /* !CONFIG_ACPI_BGRT */
+
+

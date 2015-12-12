@@ -1,0 +1,27 @@
+From 6fc25ec17da938bf1253444807d6f37e986ffb39 Mon Sep 17 00:00:00 2001
+From: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+Date: Mon, 1 Jun 2015 11:09:15 +0800
+Subject: [PATCH] meta-intel-galileo: base-files: change hostname to "quark"
+
+The hostname for the images built was changed to reflect as
+"root@quark" instead of "root@galileo".
+
+Signed-off-by: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+---
+ meta-intel-galileo/recipes-core/base-files/base-files_3.0.14.bbappend | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-intel-galileo/recipes-core/base-files/base-files_3.0.14.bbappend b/meta-intel-galileo/recipes-core/base-files/base-files_3.0.14.bbappend
+index fa5be80..9751e4c 100644
+--- a/meta-intel-galileo/recipes-core/base-files/base-files_3.0.14.bbappend
++++ b/meta-intel-galileo/recipes-core/base-files/base-files_3.0.14.bbappend
+@@ -2,5 +2,5 @@ BASEFILESISSUEINSTALL = "do_install_hostname_issue"
+ 
+ do_install_hostname_issue() {
+   # change the default hostname
+-  echo galileo > ${D}${sysconfdir}/hostname
++  echo quark > ${D}${sysconfdir}/hostname
+ }
+-- 
+1.9.1
+

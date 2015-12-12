@@ -1,0 +1,215 @@
+diff -uNr galileo-target-0.1/clloader.h galileo-target-0.1.x/clloader.h
+--- galileo-target-0.1/clloader.h	2014-02-28 12:18:22.000000000 +0000
++++ galileo-target-0.1.x/clloader.h	2014-05-02 12:31:44.000000000 +0100
+@@ -2,21 +2,14 @@
+ /* 
+  * Copyright(c) 2013 Intel Corporation.
+  *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of version 2 of the GNU General Public License as
+- * published by the Free Software Foundation.
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
+  *
+- * This program is distributed in the hope that it will be useful, but
+- * WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Contact Information:
+- * Intel Corporation
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
+  */
+ 
+ #include <stdio.h>
+diff -uNr galileo-target-0.1/galileo-reset/galileo-reset.c galileo-target-0.1.x/galileo-reset/galileo-reset.c
+--- galileo-target-0.1/galileo-reset/galileo-reset.c	2014-02-28 12:18:22.000000000 +0000
++++ galileo-target-0.1.x/galileo-reset/galileo-reset.c	2014-05-02 12:31:44.000000000 +0100
+@@ -4,21 +4,14 @@
+  *
+  * Copyright(c) 2013 Intel Corporation.
+  *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of version 2 of the GNU General Public License as
+- * published by the Free Software Foundation.
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
+  *
+- * This program is distributed in the hope that it will be useful, but
+- * WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Contact Information:
+- * Intel Corporation
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
+  */
+ 
+ 
+@@ -47,32 +40,52 @@
+ int reset_active=0;
+ 
+ 
+-int main(int argc, const char * argv[])
++int main(int argc, char * argv[])
+ {
+     
+     char gpio_str[GPIO_STRING_LEN];
+     int Verbose=0;
++    int arg;
++    int input_gpio = -1, output_gpio = -1;
+ 
+-    while (--argc > 0) {
+-	if (! strcmp(argv[argc],"-v") ) {
+-	  Verbose++;
+-	}
+-	if (! strcmp(argv[argc],"-vv") ) {
+-	  Verbose += 2;
+-	}
++    while ((arg = getopt(argc, argv, ":vi:o:")) != -1) {
++	    switch (arg) {
++	    case 'i':
++		    /* Set the GPIO for reset input signal from shield */
++		    input_gpio = atoi(optarg);
++		    break;
++	    case 'o':
++		    /* Set the GPIO for reset output signal to shield */
++		    output_gpio = atoi(optarg);
++		    break;
++	    case 'v':
++		    Verbose++;
++		    break;
++	    default:
++		    break;
++	    }/* switch(arg) */
+     }
+-    
++
++    if (input_gpio < 0){
++	    printf("Shield reset input GPIO invalid or not specified (%d)\n", input_gpio);
++	    exit(1);
++    }
++    if (output_gpio < 0){
++	    printf("Shield reset output GPIO invalid or not specified (%d)\n", output_gpio);
++	    exit(1);
++    }
++
+     /*
+      * Sheld output reset
+      */
+     
+-    sprintf(gpio_str,"echo  %d  > %s ",SHIELD_OUTPUT_RESET_GPIO_PIN , GPIO_SYS_EXPORT_STRING);
++    sprintf(gpio_str,"echo  %d  > %s ", output_gpio , GPIO_SYS_EXPORT_STRING);
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+     
+     //  set   /sys/class/gpio/gpioN/direction out
+-    sprintf(gpio_str,"echo out > %s/gpio%d/direction ",GPIO_SYS_BASE_STRING,SHIELD_OUTPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"echo out > %s/gpio%d/direction ", GPIO_SYS_BASE_STRING, output_gpio);
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+@@ -81,18 +94,18 @@
+      * Set sheld reset line low/high to reset all shields
+      */
+     
+-    sprintf(gpio_str,"echo 0 > %s/gpio%d/value ",GPIO_SYS_BASE_STRING,SHIELD_OUTPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"echo 0 > %s/gpio%d/value ", GPIO_SYS_BASE_STRING, output_gpio);
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+-    sprintf(gpio_str,"echo 1 > %s/gpio%d/value ",GPIO_SYS_BASE_STRING,SHIELD_OUTPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"echo 1 > %s/gpio%d/value ", GPIO_SYS_BASE_STRING, output_gpio);
+ 
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+     
+             
+-    sprintf(gpio_str,"echo  %d  > %s ",INPUT_RESET_GPIO_PIN , GPIO_SYS_EXPORT_STRING);
++    sprintf(gpio_str,"echo  %d  > %s ", input_gpio, GPIO_SYS_EXPORT_STRING);
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+@@ -100,7 +113,7 @@
+ 
+    //    /sys/class/gpio/gpioN/direction in
+     
+-    sprintf(gpio_str,"echo in > %s/gpio%d/direction ",GPIO_SYS_BASE_STRING,INPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"echo in > %s/gpio%d/direction ", GPIO_SYS_BASE_STRING, input_gpio);
+     if (Verbose >=2 )
+       printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+@@ -108,13 +121,13 @@
+   
+    //    /sys/class/gpio/gpioN/edge both
+    // falling only not supported by cy8c9540a driver
+-    sprintf(gpio_str,"echo both > %s/gpio%d/edge ",GPIO_SYS_BASE_STRING,INPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"echo both > %s/gpio%d/edge ", GPIO_SYS_BASE_STRING, input_gpio);
+     if (Verbose >=2 )
+    	printf("Exec:%s\n",gpio_str);
+     system(gpio_str);
+            
+     
+-    sprintf(gpio_str,"%s/gpio%d/value",GPIO_SYS_BASE_STRING,INPUT_RESET_GPIO_PIN);
++    sprintf(gpio_str,"%s/gpio%d/value", GPIO_SYS_BASE_STRING, input_gpio);
+     if (Verbose >=2 )
+       printf("Opening for select:%s\n",gpio_str);
+ 
+diff -uNr galileo-target-0.1/galileo-reset/galileo-reset.h galileo-target-0.1.x/galileo-reset/galileo-reset.h
+--- galileo-target-0.1/galileo-reset/galileo-reset.h	2014-02-28 12:18:22.000000000 +0000
++++ galileo-target-0.1.x/galileo-reset/galileo-reset.h	2014-05-02 12:31:44.000000000 +0100
+@@ -2,29 +2,19 @@
+ /* 
+  * Copyright(c) 2013 Intel Corporation.
+  *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of version 2 of the GNU General Public License as
+- * published by the Free Software Foundation.
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
+  *
+- * This program is distributed in the hope that it will be useful, but
+- * WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * Contact Information:
+- * Intel Corporation
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
+  */
+ 
+ #ifndef gpio_reset_Header_h
+ #define gpio_reset_Header_h
+ 
+-#define INPUT_RESET_GPIO_PIN 52
+-#define SHIELD_OUTPUT_RESET_GPIO_PIN 53
+-
+ #define GPIO_SYS_BASE_STRING "/sys/class/gpio"
+ #define GPIO_SYS_EXPORT_STRING "/sys/class/gpio/export"
+ 

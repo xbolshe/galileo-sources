@@ -1,0 +1,20 @@
+Default targets are:
+    image-full
+    image-spi
+
+Note: Please make sure local.conf is setup as follow:
+For image-spi:
+    DISTRO = "iot-devkit-spi"
+
+For image-full:
+    DISTRO = "iot-devkit-multilibc"
+
+Note: The output is at build/tmp/deploy/images/quark
+
+===============================================================
+To build the cross-compilation tool-chain for respective image:
+===============================================================
+    $ bitbake image-full -c populate_sdk
+OR
+    $ bitbake image-spi -c populate_sdk
+Note: The output is at build/tmp/deploy/sdk

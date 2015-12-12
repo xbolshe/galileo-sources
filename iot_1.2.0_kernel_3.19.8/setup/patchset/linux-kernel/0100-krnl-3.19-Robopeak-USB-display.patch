@@ -1,0 +1,3003 @@
+From: Eugene Bolshakov <pub@relvarsoft.com>
+Date: Sun, 6 Dec 2015 10:36:12 +0300
+Subject: [PATCH 0100/9999] Robopeak: USB display
+
+Linux Kernel 3.19 patch for Intel Galileo Gen1/Gen2 board
+Tested-by: Eugene Bolshakov <pub@relvarsoft.com>
+
+Original source: https://github.com/robopeak/rpusbdisp
+---
+
+ Kconfig |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
+--- a/drivers/video/Kconfig
++++ b/drivers/video/Kconfig
+@@ -28,6 +28,7 @@ endmenu
+
+ menu "Frame buffer Devices"
+ source "drivers/video/fbdev/Kconfig"
++source "drivers/video/robopeak/Kconfig"
+ endmenu
+
+ source "drivers/video/backlight/Kconfig"
+
+ Makefile |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/video/Makefile b/drivers/video/Makefile
+--- a/drivers/video/Makefile
++++ b/drivers/video/Makefile
+@@ -7,6 +7,8 @@ obj-y				  += backlight/
+
+ obj-y				  += fbdev/
+
++obj-y				  += robopeak/
++
+ obj-$(CONFIG_VIDEOMODE_HELPERS) += display_timing.o videomode.o
+ ifeq ($(CONFIG_OF),y)
+ obj-$(CONFIG_VIDEOMODE_HELPERS) += of_display_timing.o of_videomode.o
+
+ Kconfig |   25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/drivers/video/robopeak/Kconfig b/drivers/video/robopeak/Kconfig
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/Kconfig
+@@ -0,0 +1,25 @@
++menuconfig FB_RPUSBDISP
++	tristate "Robopeak USB Display"
++        depends on FB && m
++	select FB_CFB_FILLRECT
++	select FB_CFB_COPYAREA
++	select FB_CFB_IMAGEBLIT
++	select FB_SYS_FILLRECT
++	select FB_SYS_COPYAREA
++	select FB_SYS_IMAGEBLIT
++	select FB_SYS_FOPS
++	select FB_MODE_HELPER
++	select FB_DEFERRED_IO
++	help
++	  Frame buffer driver for RoboPeak usb display
++	  The module will be called rp_usbdisplay.
++
++config RPUSBDISP_FPS
++	int "display frame rate"
++	default 16
++	depends on FB_RPUSBDISP
++	help
++	  Specify the frame rate used by the FB_DEFERRED_IO to update
++	  the display content
++	  This value can be overridden by the modprobe
++	  with the fps parameter
+\ No newline at end of file
+
+ LICENSE |  341 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 341 insertions(+)
+
+diff --git a/drivers/video/robopeak/LICENSE b/drivers/video/robopeak/LICENSE
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/LICENSE
+@@ -0,0 +1,341 @@
++
++		    GNU GENERAL PUBLIC LICENSE
++		       Version 2, June 1991
++
++ Copyright (C) 1989, 1991 Free Software Foundation, Inc.
++                       51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ Everyone is permitted to copy and distribute verbatim copies
++ of this license document, but changing it is not allowed.
++
++			    Preamble
++
++  The licenses for most software are designed to take away your
++freedom to share and change it.  By contrast, the GNU General Public
++License is intended to guarantee your freedom to share and change free
++software--to make sure the software is free for all its users.  This
++General Public License applies to most of the Free Software
++Foundation's software and to any other program whose authors commit to
++using it.  (Some other Free Software Foundation software is covered by
++the GNU Library General Public License instead.)  You can apply it to
++your programs, too.
++
++  When we speak of free software, we are referring to freedom, not
++price.  Our General Public Licenses are designed to make sure that you
++have the freedom to distribute copies of free software (and charge for
++this service if you wish), that you receive source code or can get it
++if you want it, that you can change the software or use pieces of it
++in new free programs; and that you know you can do these things.
++
++  To protect your rights, we need to make restrictions that forbid
++anyone to deny you these rights or to ask you to surrender the rights.
++These restrictions translate to certain responsibilities for you if you
++distribute copies of the software, or if you modify it.
++
++  For example, if you distribute copies of such a program, whether
++gratis or for a fee, you must give the recipients all the rights that
++you have.  You must make sure that they, too, receive or can get the
++source code.  And you must show them these terms so they know their
++rights.
++
++  We protect your rights with two steps: (1) copyright the software, and
++(2) offer you this license which gives you legal permission to copy,
++distribute and/or modify the software.
++
++  Also, for each author's protection and ours, we want to make certain
++that everyone understands that there is no warranty for this free
++software.  If the software is modified by someone else and passed on, we
++want its recipients to know that what they have is not the original, so
++that any problems introduced by others will not reflect on the original
++authors' reputations.
++
++  Finally, any free program is threatened constantly by software
++patents.  We wish to avoid the danger that redistributors of a free
++program will individually obtain patent licenses, in effect making the
++program proprietary.  To prevent this, we have made it clear that any
++patent must be licensed for everyone's free use or not licensed at all.
++
++  The precise terms and conditions for copying, distribution and
++modification follow.
++
++		    GNU GENERAL PUBLIC LICENSE
++   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
++
++  0. This License applies to any program or other work which contains
++a notice placed by the copyright holder saying it may be distributed
++under the terms of this General Public License.  The "Program", below,
++refers to any such program or work, and a "work based on the Program"
++means either the Program or any derivative work under copyright law:
++that is to say, a work containing the Program or a portion of it,
++either verbatim or with modifications and/or translated into another
++language.  (Hereinafter, translation is included without limitation in
++the term "modification".)  Each licensee is addressed as "you".
++
++Activities other than copying, distribution and modification are not
++covered by this License; they are outside its scope.  The act of
++running the Program is not restricted, and the output from the Program
++is covered only if its contents constitute a work based on the
++Program (independent of having been made by running the Program).
++Whether that is true depends on what the Program does.
++
++  1. You may copy and distribute verbatim copies of the Program's
++source code as you receive it, in any medium, provided that you
++conspicuously and appropriately publish on each copy an appropriate
++copyright notice and disclaimer of warranty; keep intact all the
++notices that refer to this License and to the absence of any warranty;
++and give any other recipients of the Program a copy of this License
++along with the Program.
++
++You may charge a fee for the physical act of transferring a copy, and
++you may at your option offer warranty protection in exchange for a fee.
++
++  2. You may modify your copy or copies of the Program or any portion
++of it, thus forming a work based on the Program, and copy and
++distribute such modifications or work under the terms of Section 1
++above, provided that you also meet all of these conditions:
++
++    a) You must cause the modified files to carry prominent notices
++    stating that you changed the files and the date of any change.
++
++    b) You must cause any work that you distribute or publish, that in
++    whole or in part contains or is derived from the Program or any
++    part thereof, to be licensed as a whole at no charge to all third
++    parties under the terms of this License.
++
++    c) If the modified program normally reads commands interactively
++    when run, you must cause it, when started running for such
++    interactive use in the most ordinary way, to print or display an
++    announcement including an appropriate copyright notice and a
++    notice that there is no warranty (or else, saying that you provide
++    a warranty) and that users may redistribute the program under
++    these conditions, and telling the user how to view a copy of this
++    License.  (Exception: if the Program itself is interactive but
++    does not normally print such an announcement, your work based on
++    the Program is not required to print an announcement.)
++
++These requirements apply to the modified work as a whole.  If
++identifiable sections of that work are not derived from the Program,
++and can be reasonably considered independent and separate works in
++themselves, then this License, and its terms, do not apply to those
++sections when you distribute them as separate works.  But when you
++distribute the same sections as part of a whole which is a work based
++on the Program, the distribution of the whole must be on the terms of
++this License, whose permissions for other licensees extend to the
++entire whole, and thus to each and every part regardless of who wrote it.
++
++Thus, it is not the intent of this section to claim rights or contest
++your rights to work written entirely by you; rather, the intent is to
++exercise the right to control the distribution of derivative or
++collective works based on the Program.
++
++In addition, mere aggregation of another work not based on the Program
++with the Program (or with a work based on the Program) on a volume of
++a storage or distribution medium does not bring the other work under
++the scope of this License.
++
++  3. You may copy and distribute the Program (or a work based on it,
++under Section 2) in object code or executable form under the terms of
++Sections 1 and 2 above provided that you also do one of the following:
++
++    a) Accompany it with the complete corresponding machine-readable
++    source code, which must be distributed under the terms of Sections
++    1 and 2 above on a medium customarily used for software interchange; or,
++
++    b) Accompany it with a written offer, valid for at least three
++    years, to give any third party, for a charge no more than your
++    cost of physically performing source distribution, a complete
++    machine-readable copy of the corresponding source code, to be
++    distributed under the terms of Sections 1 and 2 above on a medium
++    customarily used for software interchange; or,
++
++    c) Accompany it with the information you received as to the offer
++    to distribute corresponding source code.  (This alternative is
++    allowed only for noncommercial distribution and only if you
++    received the program in object code or executable form with such
++    an offer, in accord with Subsection b above.)
++
++The source code for a work means the preferred form of the work for
++making modifications to it.  For an executable work, complete source
++code means all the source code for all modules it contains, plus any
++associated interface definition files, plus the scripts used to
++control compilation and installation of the executable.  However, as a
++special exception, the source code distributed need not include
++anything that is normally distributed (in either source or binary
++form) with the major components (compiler, kernel, and so on) of the
++operating system on which the executable runs, unless that component
++itself accompanies the executable.
++
++If distribution of executable or object code is made by offering
++access to copy from a designated place, then offering equivalent
++access to copy the source code from the same place counts as
++distribution of the source code, even though third parties are not
++compelled to copy the source along with the object code.
++
++  4. You may not copy, modify, sublicense, or distribute the Program
++except as expressly provided under this License.  Any attempt
++otherwise to copy, modify, sublicense or distribute the Program is
++void, and will automatically terminate your rights under this License.
++However, parties who have received copies, or rights, from you under
++this License will not have their licenses terminated so long as such
++parties remain in full compliance.
++
++  5. You are not required to accept this License, since you have not
++signed it.  However, nothing else grants you permission to modify or
++distribute the Program or its derivative works.  These actions are
++prohibited by law if you do not accept this License.  Therefore, by
++modifying or distributing the Program (or any work based on the
++Program), you indicate your acceptance of this License to do so, and
++all its terms and conditions for copying, distributing or modifying
++the Program or works based on it.
++
++  6. Each time you redistribute the Program (or any work based on the
++Program), the recipient automatically receives a license from the
++original licensor to copy, distribute or modify the Program subject to
++these terms and conditions.  You may not impose any further
++restrictions on the recipients' exercise of the rights granted herein.
++You are not responsible for enforcing compliance by third parties to
++this License.
++
++  7. If, as a consequence of a court judgment or allegation of patent
++infringement or for any other reason (not limited to patent issues),
++conditions are imposed on you (whether by court order, agreement or
++otherwise) that contradict the conditions of this License, they do not
++excuse you from the conditions of this License.  If you cannot
++distribute so as to satisfy simultaneously your obligations under this
++License and any other pertinent obligations, then as a consequence you
++may not distribute the Program at all.  For example, if a patent
++license would not permit royalty-free redistribution of the Program by
++all those who receive copies directly or indirectly through you, then
++the only way you could satisfy both it and this License would be to
++refrain entirely from distribution of the Program.
++
++If any portion of this section is held invalid or unenforceable under
++any particular circumstance, the balance of the section is intended to
++apply and the section as a whole is intended to apply in other
++circumstances.
++
++It is not the purpose of this section to induce you to infringe any
++patents or other property right claims or to contest validity of any
++such claims; this section has the sole purpose of protecting the
++integrity of the free software distribution system, which is
++implemented by public license practices.  Many people have made
++generous contributions to the wide range of software distributed
++through that system in reliance on consistent application of that
++system; it is up to the author/donor to decide if he or she is willing
++to distribute software through any other system and a licensee cannot
++impose that choice.
++
++This section is intended to make thoroughly clear what is believed to
++be a consequence of the rest of this License.
++
++  8. If the distribution and/or use of the Program is restricted in
++certain countries either by patents or by copyrighted interfaces, the
++original copyright holder who places the Program under this License
++may add an explicit geographical distribution limitation excluding
++those countries, so that distribution is permitted only in or among
++countries not thus excluded.  In such case, this License incorporates
++the limitation as if written in the body of this License.
++
++  9. The Free Software Foundation may publish revised and/or new versions
++of the General Public License from time to time.  Such new versions will
++be similar in spirit to the present version, but may differ in detail to
++address new problems or concerns.
++
++Each version is given a distinguishing version number.  If the Program
++specifies a version number of this License which applies to it and "any
++later version", you have the option of following the terms and conditions
++either of that version or of any later version published by the Free
++Software Foundation.  If the Program does not specify a version number of
++this License, you may choose any version ever published by the Free Software
++Foundation.
++
++  10. If you wish to incorporate parts of the Program into other free
++programs whose distribution conditions are different, write to the author
++to ask for permission.  For software which is copyrighted by the Free
++Software Foundation, write to the Free Software Foundation; we sometimes
++make exceptions for this.  Our decision will be guided by the two goals
++of preserving the free status of all derivatives of our free software and
++of promoting the sharing and reuse of software generally.
++
++			    NO WARRANTY
++
++  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
++FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
++OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
++PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
++OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
++TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
++PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
++REPAIR OR CORRECTION.
++
++  12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
++WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
++REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
++INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
++OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
++TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
++YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
++PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
++POSSIBILITY OF SUCH DAMAGES.
++
++		     END OF TERMS AND CONDITIONS
++
++	    How to Apply These Terms to Your New Programs
++
++  If you develop a new program, and you want it to be of the greatest
++possible use to the public, the best way to achieve this is to make it
++free software which everyone can redistribute and change under these terms.
++
++  To do so, attach the following notices to the program.  It is safest
++to attach them to the start of each source file to most effectively
++convey the exclusion of warranty; and each file should have at least
++the "copyright" line and a pointer to where the full notice is found.
++
++    <one line to give the program's name and a brief idea of what it does.>
++    Copyright (C) <year>  <name of author>
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with this program; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++
++Also add information on how to contact you by electronic and paper mail.
++
++If the program is interactive, make it output a short notice like this
++when it starts in an interactive mode:
++
++    Gnomovision version 69, Copyright (C) year name of author
++    Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
++    This is free software, and you are welcome to redistribute it
++    under certain conditions; type `show c' for details.
++
++The hypothetical commands `show w' and `show c' should show the appropriate
++parts of the General Public License.  Of course, the commands you use may
++be called something other than `show w' and `show c'; they could even be
++mouse-clicks or menu items--whatever suits your program.
++
++You should also get your employer (if you work as a programmer) or your
++school, if any, to sign a "copyright disclaimer" for the program, if
++necessary.  Here is a sample; alter the names:
++
++  Yoyodyne, Inc., hereby disclaims all copyright interest in the program
++  `Gnomovision' (which makes passes at compilers) written by James Hacker.
++
++  <signature of Ty Coon>, 1 April 1989
++  Ty Coon, President of Vice
++
++This General Public License does not permit incorporating your program into
++proprietary programs.  If your program is a subroutine library, you may
++consider it more useful to permit linking proprietary applications with the
++library.  If this is what you want to do, use the GNU Library General
++Public License instead of this License.
+
+ Makefile |   26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/drivers/video/robopeak/Makefile b/drivers/video/robopeak/Makefile
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/Makefile
+@@ -0,0 +1,26 @@
++######################################
++#
++#    RoboPeak USB LCD Display Linux Driver
++#
++#    Copyright (C) 2009 - 2013 RoboPeak Team
++#    This file is licensed under the GPL. See LICENSE in the package.
++#
++#    http://www.robopeak.net
++#
++#    Author Shikai Chen
++#
++######################################
++
++
++DRIVER_NAME := rp_usbdisplay
++
++EXTRA_CFLAGS += -I$(PWD)/src -I$(PWD)/../common
++
++obj-$(CONFIG_FB_RPUSBDISP) := $(DRIVER_NAME).o
++
++DRIVER_FILES := src/main.o \
++                src/usbhandlers.o \
++		src/fbhandlers.o \
++		src/touchhandlers.o
++
++$(DRIVER_NAME)-objs:= $(DRIVER_FILES)
+\ No newline at end of file
+
+ run.sh |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/video/robopeak/run.sh b/drivers/video/robopeak/run.sh
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/run.sh
+@@ -0,0 +1,5 @@
++#!/bin/sh
++./stop.sh
++cp rp_usbdisplay.ko /lib/modules/`uname -r`/
++modprobe rp_usbdisplay
++echo 1 > /sys/class/vtconsole/vtcon1/bind
+
+ stop.sh |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/video/robopeak/stop.sh b/drivers/video/robopeak/stop.sh
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/stop.sh
+@@ -0,0 +1,3 @@
++#!/bin/sh
++echo 0 > /sys/class/vtconsole/vtcon1/bind
++rmmod rp_usbdisplay
+
+ fbhandlers.c |  558 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 558 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/fbhandlers.c b/drivers/video/robopeak/src/fbhandlers.c
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/fbhandlers.c
+@@ -0,0 +1,558 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *    Frame Buffer Handlers
++ */
++
++#include "inc/common.h"
++#include "inc/fbhandlers.h"
++#include "inc/usbhandlers.h"
++
++static struct fb_info * _default_fb;
++
++struct dirty_rect {
++    int  left;
++    int  top;
++    int  right;
++    int  bottom;
++    atomic_t dirty_flag;
++};
++
++
++enum {
++    DISPLAY_UPDATE_HINT_NONE       = 0,
++    DISPLAY_UPDATE_HINT_BITBLT     = 1,
++    DISPLAY_UPDATE_HINT_FILLRECT   = 2,
++    DISPLAY_UPDATE_HINT_COPYAREA   = 3,
++
++};
++
++
++struct rpusbdisp_fb_private {
++    _u32 pseudo_palette [16];
++    struct dirty_rect dirty_rect;
++    struct mutex      operation_lock;
++    struct rpusbdisp_dev * binded_usbdev;
++
++
++//lock free area
++    atomic_t               unsync_flag;
++};
++
++
++
++static struct fb_fix_screeninfo _vfb_fix /*__devinitdata*/ = {
++	.id =	    "rpusbdisp-fb",
++	.type =		FB_TYPE_PACKED_PIXELS,
++	.visual =	FB_VISUAL_TRUECOLOR,
++	.accel =	FB_ACCEL_NONE,
++    .line_length = RP_DISP_DEFAULT_WIDTH * RP_DISP_DEFAULT_PIXEL_BITS/8,
++
++};
++
++
++static  struct fb_var_screeninfo _var_info /*__devinitdata*/ = {
++    .xres = RP_DISP_DEFAULT_WIDTH,
++    .yres = RP_DISP_DEFAULT_HEIGHT,
++    .xres_virtual = RP_DISP_DEFAULT_WIDTH,
++    .yres_virtual = RP_DISP_DEFAULT_HEIGHT,
++    .width = RP_DISP_DEFAULT_WIDTH,
++    .height = RP_DISP_DEFAULT_HEIGHT,
++    .bits_per_pixel =        RP_DISP_DEFAULT_PIXEL_BITS ,
++    .red = { 0 , 5 , 0 } ,
++    .green = { 5 , 6 , 0 } ,
++    .blue = { 11 , 5 , 0 } ,
++    .activate = FB_ACTIVATE_NOW,
++    .vmode = FB_VMODE_NONINTERLACED,
++};
++
++
++static DEFINE_MUTEX(_mutex_devreg);
++
++
++
++static inline struct rpusbdisp_fb_private * _get_fb_private(struct fb_info * info)
++{
++    return (struct rpusbdisp_fb_private *)info->par;
++}
++
++
++static void _clear_dirty_rect(struct dirty_rect * rect) {
++    rect->left = RP_DISP_DEFAULT_WIDTH;
++    rect->right = -1;
++    rect->top = RP_DISP_DEFAULT_HEIGHT;
++    rect->bottom = -1;
++    atomic_set(&rect->dirty_flag,0);
++}
++
++static void _reset_fb_private(struct rpusbdisp_fb_private * pa) {
++    mutex_init(&pa->operation_lock);
++    _clear_dirty_rect(&pa->dirty_rect);
++    pa->binded_usbdev = NULL;
++    atomic_set(&pa->unsync_flag, 1);
++}
++
++
++
++
++static  void _display_update( struct fb_info *p, int x, int y, int width, int height, int hint, const void * hint_data)
++{
++
++    struct rpusbdisp_fb_private * pa = _get_fb_private(p);
++
++    int clear_dirty = 0;
++    mutex_lock(&pa->operation_lock);
++
++    if (!pa->binded_usbdev) goto final;
++    // 1. update the dirty rect
++
++    if (atomic_dec_and_test(&pa->unsync_flag)) {
++        // force the dirty rect to cover the full display area if the display is not synced.
++        pa->dirty_rect.left = 0;
++        pa->dirty_rect.right = p->var.width-1;
++        pa->dirty_rect.top = 0;
++        pa->dirty_rect.bottom = p->var.height-1;
++
++        clear_dirty = 1;
++    } else {
++
++        if (pa->dirty_rect.top > y) pa->dirty_rect.top = y;
++        if (pa->dirty_rect.bottom < height+y-1) pa->dirty_rect.bottom = height+y-1;
++        if (pa->dirty_rect.left > x) pa->dirty_rect.left = x;
++        if (pa->dirty_rect.right < width+x-1) pa->dirty_rect.right = width + x - 1;
++
++    }
++
++    if (pa->dirty_rect.top > pa->dirty_rect.bottom || pa->dirty_rect.left > pa->dirty_rect.right) {
++        goto final;
++    }
++    atomic_set(&pa->dirty_rect.dirty_flag, 1);
++
++    // 2. try to send it
++    if (pa->binded_usbdev) {
++
++        switch (hint) {
++            case DISPLAY_UPDATE_HINT_FILLRECT:
++            {
++                const struct fb_fillrect * fillrt = (struct fb_fillrect *)hint_data;
++                if (rpusbdisp_usb_try_draw_rect(pa->binded_usbdev, fillrt->dx, fillrt->dy, fillrt->dx + fillrt->width-1,
++                    fillrt->dy + fillrt->height-1, fillrt->color, fillrt->rop==ROP_XOR?RPUSBDISP_OPERATION_XOR:RPUSBDISP_OPERATION_COPY))
++                {
++                    // data sent, rect the dirty rect
++                    _clear_dirty_rect(&pa->dirty_rect);
++
++
++                }
++            }
++            break;
++
++            case DISPLAY_UPDATE_HINT_COPYAREA:
++            {
++                const  struct fb_copyarea * copyarea = (struct fb_copyarea *)hint_data;
++                if (rpusbdisp_usb_try_copy_area(pa->binded_usbdev, copyarea->sx, copyarea->sy, copyarea->dx,  copyarea->dy,
++                    copyarea->width, copyarea->height))
++                {
++                    // data sent, rect the dirty rect
++                    _clear_dirty_rect(&pa->dirty_rect);
++
++                }
++
++            }
++            break;
++            default:
++                if (rpusbdisp_usb_try_send_image(pa->binded_usbdev, (const pixel_type_t *)p->fix.smem_start,
++                     pa->dirty_rect.left, pa->dirty_rect.top, pa->dirty_rect.right, pa->dirty_rect.bottom, p->fix.line_length/(RP_DISP_DEFAULT_PIXEL_BITS/8),
++                     clear_dirty)) {
++                    // data sent, rect the dirty rect
++                    _clear_dirty_rect(&pa->dirty_rect);
++
++                }
++        }
++
++    }
++final:
++    mutex_unlock(&pa->operation_lock);
++
++
++}
++
++
++static  void _display_fillrect ( struct fb_info * p, const  struct fb_fillrect * rect)
++{
++    sys_fillrect (p, rect);
++    _display_update(p, rect->dx, rect->dy, rect->width, rect->height, DISPLAY_UPDATE_HINT_FILLRECT, rect);
++}
++
++static  void _display_imageblit ( struct fb_info * p, const  struct fb_image * image)
++{
++
++    sys_imageblit (p, image);
++    _display_update(p, image->dx, image->dy, image->width, image->height, DISPLAY_UPDATE_HINT_BITBLT, image);
++}
++
++static  void _display_copyarea ( struct fb_info * p, const  struct fb_copyarea * area)
++{
++
++    sys_copyarea (p, area);
++    _display_update(p, area->dx, area->dy, area->width, area->height, DISPLAY_UPDATE_HINT_COPYAREA, area);
++}
++
++static ssize_t _display_write ( struct fb_info * p, const  char * buf __user,
++                                size_t count, loff_t * ppos)
++{
++    int retval;
++    retval = fb_sys_write (p, buf, count, ppos);
++
++    _display_update(p, 0, 0, p->var.width, p->var.height, DISPLAY_UPDATE_HINT_NONE, NULL);
++    return retval;
++}
++
++
++static int _display_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
++			 u_int transp, struct fb_info *info)
++{
++    #define CNVT_TOHW(val, width) ((((val) << (width)) +0x7FFF-(val)) >> 16)
++    int ret = 1 ;
++    if (info->var.grayscale)
++        red = green = blue = ( 19595 * red + 38470 * green +
++                               7471 * blue) >> 16 ;
++    switch (info->fix.visual) {
++    case FB_VISUAL_TRUECOLOR:
++        if (regno < 16 ) {
++            u32 * pal = info->pseudo_palette;
++            u32 value;
++
++            red = CNVT_TOHW (red, info->var.red.length);
++            green = CNVT_TOHW (green, info->var.green.length);
++            blue = CNVT_TOHW (blue, info->var.blue.length);
++            transp = CNVT_TOHW (transp, info->var.transp.length);
++
++            value = (red << info->var.red.offset) |
++                    (green << info->var.green.offset) |
++                    (blue << info->var.blue.offset) |
++                    (transp << info->var.transp.offset);
++
++            pal[regno] = value;
++            ret = 0 ;
++        }
++        break ;
++    case FB_VISUAL_STATIC_PSEUDOCOLOR:
++    case FB_VISUAL_PSEUDOCOLOR:
++         break ;
++    }
++    return ret;
++}
++
++
++static void _display_defio_handler(struct fb_info *info,
++				struct list_head *pagelist) {
++    struct page *cur;
++    struct fb_deferred_io *fbdefio = info->fbdefio;
++    int top = RP_DISP_DEFAULT_HEIGHT, bottom = 0;
++    int current_val;
++    unsigned long offset;
++    unsigned long page_start;
++
++    struct rpusbdisp_fb_private * pa = _get_fb_private(info);
++    if (!pa->binded_usbdev) return; //simply ignore it
++
++    list_for_each_entry(cur, &fbdefio->pagelist, lru) {
++
++        // convert page range to dirty box
++        page_start = (cur->index<<PAGE_SHIFT);
++
++        if (page_start < info->fix.mmio_start && page_start >= info->fix.mmio_start + info->fix.smem_len) {
++            continue;
++        }
++
++        offset = (unsigned long)(page_start - info->fix.mmio_start);
++        current_val = offset / info->fix.line_length;
++        if (top>current_val) top = current_val;
++        current_val = (offset + PAGE_SIZE + info->fix.line_length -1 )/ info->fix.line_length;
++        if (bottom<current_val) bottom = current_val;
++
++    }
++    if (bottom >= RP_DISP_DEFAULT_HEIGHT) bottom = RP_DISP_DEFAULT_HEIGHT - 1;
++
++
++    _display_update(info, 0, top, info->var.width, bottom - top + 1, DISPLAY_UPDATE_HINT_NONE, NULL);
++}
++
++static  struct fb_ops _display_fbops /*__devinitdata*/ = {
++    .owner = THIS_MODULE,
++    .fb_read = fb_sys_read,
++    .fb_write =     _display_write,
++    .fb_fillrect =  _display_fillrect,
++    .fb_copyarea =  _display_copyarea,
++    .fb_imageblit = _display_imageblit,
++    .fb_setcolreg = _display_setcolreg,
++};
++
++
++static void *rvmalloc(unsigned long size)
++{
++	void *mem;
++	unsigned long adr;
++
++	size = PAGE_ALIGN(size);
++	mem = vmalloc_32(size);
++	if (!mem)
++		return NULL;
++
++	memset(mem, 0, size); /* Clear the ram out, no junk to the user */
++	adr = (unsigned long) mem;
++	while (size > 0) {
++		SetPageReserved(vmalloc_to_page((void *)adr));
++		adr += PAGE_SIZE;
++		size -= PAGE_SIZE;
++	}
++
++	return mem;
++}
++
++static void rvfree(void *mem, unsigned long size)
++{
++	unsigned long adr;
++
++	if (!mem)
++		return;
++
++	adr = (unsigned long) mem;
++	while ((long) size > 0) {
++		ClearPageReserved(vmalloc_to_page((void *)adr));
++		adr += PAGE_SIZE;
++		size -= PAGE_SIZE;
++	}
++	vfree(mem);
++}
++
++
++
++
++#if 0
++
++static struct platform_driver rpusbdisp_fb_driver = {
++	.probe		= _rpusbdisp_initial_probe,
++	.remove		= __devexit_p(_rpusbdisp_final_remove),
++	.driver		= {
++		.owner	= THIS_MODULE,
++		.name	= "rpusbdisp-fb",
++	},
++};
++#endif
++
++static int _on_create_new_fb(struct fb_info ** out_fb, struct rpusbdisp_dev *dev)
++{
++    int ret = -ENOMEM;
++    size_t fbmem_size = 0;
++    void * fbmem = NULL;
++    struct fb_info * fb;
++    struct fb_deferred_io *fbdefio;
++
++    *out_fb = NULL;
++
++
++    fb = framebuffer_alloc(sizeof(struct rpusbdisp_fb_private), NULL/*rpusbdisp_usb_get_devicehandle(dev)*/);
++
++    if (!fb) {
++        err("Failed to initialize framebuffer device\n");
++        goto failed;
++    }
++
++    fb->fix = _vfb_fix;
++    fb->var = _var_info;
++
++
++    fb->fbops       = &_display_fbops;
++    fb->flags       = FBINFO_DEFAULT | FBINFO_VIRTFB;
++
++    fbmem_size = _var_info.yres * _vfb_fix.line_length; // Correct issue with size allocation (too big)
++    fbmem =  rvmalloc(fbmem_size);
++    if (!fbmem) {
++
++        err("Cannot allocate fb memory.\n");
++        goto failed_nofb;
++    }
++
++
++    memset(fbmem, 0, fbmem_size);
++
++    fb->screen_base = (char __iomem *)fbmem;
++    fb->fix.smem_start = (unsigned long)fb->screen_base;
++    fb->fix.smem_len = fbmem_size;
++
++    fb->pseudo_palette = _get_fb_private(fb)->pseudo_palette;
++
++
++    if (fb_alloc_cmap(&fb->cmap, 256, 0)) {
++       err("Cannot alloc the cmap.\n");
++
++       goto failed_nocmap;
++
++    }
++
++
++	// Since kernel 3.5 the fb_deferred_io structure has a second callback (first_io) that must be set to a valid function or NULL.
++	// To avoid unexpected crash due to a non initialized function pointer do a kzalloc rather than a kmalloc
++	fbdefio = /*kmalloc*/kzalloc(sizeof(struct fb_deferred_io), GFP_KERNEL);
++
++	if (fbdefio) {
++                // frame rate is configurable through the fps option during the load operation
++		fbdefio->delay = HZ/fps;
++		fbdefio->deferred_io = _display_defio_handler;
++	} else {
++        err("Cannot alloc the fb_deferred_io.\n");
++
++         goto failed_nodefio;
++
++	}
++
++	fb->fbdefio = fbdefio;
++	fb_deferred_io_init(fb);
++
++
++    _reset_fb_private(_get_fb_private(fb));
++
++    // register the framebuffer device
++    ret = register_framebuffer(fb);
++    if (ret < 0) {
++        err("Cannot register the framebuffer device.\n");
++        goto failed_on_reg;
++    }
++
++    *out_fb = fb;
++    return ret;
++
++
++
++failed_on_reg:
++    kfree(fbdefio);
++failed_nodefio:
++    fb_dealloc_cmap(&fb->cmap);
++failed_nocmap:
++    rvfree(fbmem, fbmem_size);
++failed_nofb:
++    framebuffer_release(fb);
++failed:
++    return ret;
++
++}
++
++static void _on_release_fb(struct fb_info * fb)
++{
++    if (!fb) return;
++
++    // del the defio
++    fb_deferred_io_cleanup(fb);
++
++    unregister_framebuffer(fb);
++    kfree(fb->fbdefio);
++    fb_dealloc_cmap(&fb->cmap);
++    rvfree(fb->screen_base, fb->fix.smem_len);
++    framebuffer_release(fb);
++
++
++}
++
++
++int __init register_fb_handlers(void)
++{
++    return _on_create_new_fb(&_default_fb, NULL);
++}
++
++void unregister_fb_handlers(void)
++{
++    _on_release_fb(_default_fb);
++}
++
++
++void fbhandler_on_all_transfer_done(struct rpusbdisp_dev * dev)
++{
++    // we have a chance to flush pending modifications to the display
++    struct fb_info * fb = (struct fb_info *)rpusbdisp_usb_get_fbhandle(dev);
++    struct rpusbdisp_fb_private * fb_pri;
++
++    if (!fb) return;
++
++    fb_pri = _get_fb_private(fb);
++
++    if (atomic_read(&fb_pri->dirty_rect.dirty_flag) || atomic_read(&fb_pri->unsync_flag)==1) {
++        _display_update(fb, 0, 0, RP_DISP_DEFAULT_WIDTH, RP_DISP_DEFAULT_HEIGHT,   DISPLAY_UPDATE_HINT_NONE, NULL);
++    }
++
++}
++
++
++int fbhandler_on_new_device(struct rpusbdisp_dev * dev)
++{
++    int ans = -1;
++    struct rpusbdisp_fb_private * fb_pri;
++
++    mutex_lock(&_mutex_devreg);
++
++    // check whether the default fb has been binded
++    fb_pri = _get_fb_private(_default_fb);
++    if (!fb_pri->binded_usbdev) {
++        mutex_lock(&fb_pri->operation_lock);
++
++        // bind to the default framebuffer ( the only one)
++        fb_pri->binded_usbdev = dev;
++        rpusbdisp_usb_set_fbhandle(dev, _default_fb);
++
++
++        ans = 0;
++        mutex_unlock(&fb_pri->operation_lock);
++    }
++
++    mutex_unlock(&_mutex_devreg);
++    return ans;
++}
++
++void fbhandler_on_remove_device(struct rpusbdisp_dev * dev)
++{
++    // perform unbinding
++    struct fb_info * fb = (struct fb_info *)rpusbdisp_usb_get_fbhandle(dev);
++
++    mutex_lock(&_mutex_devreg);
++
++    if (fb) {
++        struct rpusbdisp_fb_private * fb_pri = _get_fb_private(_default_fb);
++
++        mutex_lock(&fb_pri->operation_lock);
++
++        // unbind them
++        fb_pri->binded_usbdev = NULL;
++        rpusbdisp_usb_set_fbhandle(dev, NULL);
++
++        mutex_unlock(&fb_pri->operation_lock);
++
++
++        // unregister the fb
++        if (fb != _default_fb) {
++            _on_release_fb(fb);
++        }
++    }
++
++    mutex_unlock(&_mutex_devreg);
++}
++
++void fbhandler_set_unsync_flag(struct rpusbdisp_dev * dev)
++{
++    struct fb_info * fb = (struct fb_info *)rpusbdisp_usb_get_fbhandle(dev);
++    struct rpusbdisp_fb_private * fb_pri;
++
++    if (!fb) return;
++
++    fb_pri = _get_fb_private(_default_fb);
++
++    atomic_set(&fb_pri->unsync_flag, 1);
++
++}
+
+ main.c |  104 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 104 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/main.c b/drivers/video/robopeak/src/main.c
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/main.c
+@@ -0,0 +1,104 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ */
++
++
++#include "inc/common.h"
++#include "inc/usbhandlers.h"
++#include "inc/fbhandlers.h"
++#include "inc/touchhandlers.h"
++
++
++
++#if 0
++static const struct file_operations lcd_fops = {
++        .owner =        THIS_MODULE,
++        .read =         lcd_read,
++        .write =        lcd_write,
++        .open =         lcd_open,
++	.unlocked_ioctl = lcd_ioctl,
++        .release =      lcd_release,
++        .llseek =	 noop_llseek,
++};
++
++/*
++ * usb class driver info in order to get a minor number from the usb core,
++ * and to have the device registered with the driver core
++ */
++static struct usb_class_driver lcd_class = {
++        .name =         "usbdisp%d",
++        .fops =         &lcd_fops,
++        .minor_base =   USBLCD_MINOR,
++};
++#endif
++
++int fps = 0;
++module_param(fps,int,0);
++MODULE_PARM_DESC(fps,"Specify the frame rate used to refresh the display (override kernel config)");
++
++
++
++static int __init usb_disp_init(void)
++{
++	int result;
++
++        if (fps == 0) {
++	    /* frame rate is not set through the modprobe command. Use the value defined in the .config */
++#ifdef CONFIG_RPUSBDISP_FPS
++	    fps = CONFIG_RPUSBDISP_FPS;
++#else
++	    /* Just in case for background compliance. Maybe the Kconfig file of the driver is not integrated */
++            fps = 16;
++#endif
++        }
++
++    do {
++
++        result = register_touch_handler();
++	    if (result) {
++		    err("touch_handler failed. Error number %d", result);
++            break;
++        }
++
++        result = register_fb_handlers();
++        if (result) {
++            err("fb handler register failed. Error number %d", result);
++            break;
++        }
++
++        result = register_usb_handlers();
++	    if (result) {
++		    err("usb_register failed. Error number %d", result);
++            break;
++        }
++
++
++
++    }while(0);
++
++	return result;
++}
++
++
++static void __exit usb_disp_exit(void)
++{
++    unregister_usb_handlers();
++    unregister_fb_handlers();
++    unregister_touch_handler();
++}
++
++module_init(usb_disp_init);
++module_exit(usb_disp_exit);
++
++
++MODULE_AUTHOR("Shikai Chen <csk@live.com>");
++MODULE_DESCRIPTION(DRIVER_VERSION);
++MODULE_LICENSE(DRIVER_LICENSE_INFO);
+\ No newline at end of file
+
+ touchhandlers.c |   95 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 95 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/touchhandlers.c b/drivers/video/robopeak/src/touchhandlers.c
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/touchhandlers.c
+@@ -0,0 +1,95 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *   Touch Event Handlers
++ */
++
++
++#include "inc/common.h"
++#include "inc/touchhandlers.h"
++#include "inc/usbhandlers.h"
++
++static struct input_dev * _default_input_dev;
++static volatile int _live_flag;
++
++static int _on_create_input_dev(struct input_dev ** inputdev)
++{
++    *inputdev = input_allocate_device();
++
++    if (!inputdev) {
++        return -ENOMEM;
++    }
++
++    (*inputdev)->evbit[0] = BIT(EV_SYN) | BIT(EV_KEY) | BIT(EV_ABS);
++
++    (*inputdev)->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
++
++
++    input_set_abs_params((*inputdev), ABS_X, 0, RP_DISP_DEFAULT_WIDTH, 0, 0);
++    input_set_abs_params((*inputdev), ABS_Y, 0, RP_DISP_DEFAULT_HEIGHT, 0, 0);
++    input_set_abs_params((*inputdev), ABS_PRESSURE, 0, 1, 0, 0);
++
++    (*inputdev)->name = "RoboPeakUSBDisplayTS";
++    (*inputdev)->id.bustype    = BUS_USB;
++
++    return input_register_device((*inputdev));
++}
++
++static void _on_release_input_dev(struct input_dev * inputdev)
++{
++
++    input_unregister_device(inputdev);
++}
++
++
++int __init register_touch_handler(void)
++{
++    int ret = _on_create_input_dev(&_default_input_dev);
++    if (!ret) _live_flag = 1;
++    return ret;
++}
++
++void unregister_touch_handler(void)
++{
++    _live_flag = 0;
++    _on_release_input_dev(_default_input_dev);
++    _default_input_dev = NULL;
++}
++
++
++int touchhandler_on_new_device(struct rpusbdisp_dev * dev)
++{
++    // singleton design
++    return 0;
++}
++
++void touchhandler_on_remove_device(struct rpusbdisp_dev * dev)
++{
++    // singleton design
++}
++
++
++void touchhandler_send_ts_event(struct rpusbdisp_dev * dev, int x, int y, int touch)
++{
++    if (!_default_input_dev || !_live_flag) return;
++    if (touch) {
++        input_report_abs(_default_input_dev,ABS_X, x);
++        input_report_abs(_default_input_dev,ABS_Y, y);
++        input_report_abs(_default_input_dev, ABS_PRESSURE, 1);
++        input_report_key(_default_input_dev,BTN_TOUCH, 1);
++
++        input_sync(_default_input_dev);
++    } else {
++        input_report_abs(_default_input_dev, ABS_PRESSURE, 0);
++        input_report_key(_default_input_dev,BTN_TOUCH, 0);
++        input_sync(_default_input_dev);
++    }
++}
+\ No newline at end of file
+
+ usbhandlers.c | 1232 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 1232 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/usbhandlers.c b/drivers/video/robopeak/src/usbhandlers.c
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/usbhandlers.c
+@@ -0,0 +1,1232 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *   -----------------------------------------------------------------
++ *    USB Driver Implementations
++ */
++
++#include "inc/common.h"
++#include "inc/usbhandlers.h"
++#include "inc/fbhandlers.h"
++#include "inc/touchhandlers.h"
++
++#define DL_ALIGN_UP(x, a) ALIGN(x, a)
++#define DL_ALIGN_DOWN(x, a) ALIGN(x-(a-1), a)
++
++
++static const struct usb_device_id id_table[] = {
++	{
++          .idVendor    = RP_DISP_USB_VENDOR_ID,
++          .idProduct   = RP_DISP_USB_PRODUCT_ID,
++          .match_flags = USB_DEVICE_ID_MATCH_VENDOR | USB_DEVICE_ID_MATCH_PRODUCT,
++        },
++	{ },
++};
++
++static atomic_t _devlist_count = ATOMIC_INIT(0);
++static LIST_HEAD( rpusbdisp_list );
++static DEFINE_MUTEX(_mutex_usbdevlist);
++static DECLARE_WAIT_QUEUE_HEAD(_usblist_waitqueue);
++
++#if 0
++static struct task_struct * _usb_status_polling_task;
++static int _kthread_usb_status_poller_proc(void *data);
++#endif
++
++static volatile int _working_flag = 0;
++
++
++#define RPUSBDISP_STATUS_BUFFER_SIZE   32
++
++
++struct rpusbdisp_disp_ticket_bundle {
++    int  ticket_count;
++    struct list_head   ticket_list;
++
++};
++
++struct rpusbdisp_disp_ticket {
++    struct urb                      *  transfer_urb;
++    struct list_head                   ticket_list_node;
++    struct rpusbdisp_dev            *  binded_dev;
++
++};
++
++
++struct rpusbdisp_disp_ticket_pool {
++    struct list_head                   list;
++    spinlock_t                         oplock;
++    size_t                             disp_urb_count;
++    size_t                             packet_size_factor;
++    int                                availiable_count;
++    wait_queue_head_t                  wait_queue;
++    struct delayed_work                completion_work;
++
++};
++
++struct rpusbdisp_dev {
++    // timing and sync
++    struct list_head                   dev_list_node;
++    int                                dev_id;
++    struct mutex                       op_locker;
++    __u8                               is_alive;
++
++    // usb device info
++    struct usb_device               *  udev;
++    struct usb_interface            *  interface;
++
++
++    // status package related
++    __u8                               status_in_buffer[RPUSBDISP_STATUS_BUFFER_SIZE]; // data buffer for the status IN endpoint
++    size_t                             status_in_buffer_recvsize;
++
++
++
++    __u8                               status_in_ep_addr;
++    wait_queue_head_t                  status_wait_queue;
++    struct urb                      *  urb_status_query;
++    int                                urb_status_fail_count;
++
++
++    // display data related
++    __u8                               disp_out_ep_addr;
++    size_t                             disp_out_ep_max_size;
++
++    struct rpusbdisp_disp_ticket_pool  disp_tickets_pool;
++
++
++
++    void                            *  fb_handle;
++    void                            *  touch_handle;
++
++    __u16                              device_fwver;
++};
++
++#if 0
++
++/*
++ * usb class driver info in order to get a minor number from the usb core,
++ * and to have the device registered with the driver core
++ */
++static struct usb_class_driver lcd_class = {
++	.name =         "rp_usbdisp%d",
++	.fops =         &disp_fops,
++	.minor_base =   RPUSBDISP_MINOR,
++};
++
++#endif
++
++
++static int _return_disp_tickets(struct rpusbdisp_dev * dev,  struct  rpusbdisp_disp_ticket * ticket);
++
++
++struct device * rpusbdisp_usb_get_devicehandle(struct rpusbdisp_dev *dev)
++{
++    return &dev->udev->dev;
++}
++
++void rpusbdisp_usb_set_fbhandle(struct rpusbdisp_dev * dev, void * fbhandle)
++{
++    dev->fb_handle = fbhandle;
++}
++
++void * rpusbdisp_usb_get_fbhandle(struct rpusbdisp_dev * dev)
++{
++    return dev->fb_handle;
++}
++
++void rpusbdisp_usb_set_touchhandle(struct rpusbdisp_dev * dev, void * touch_handle)
++{
++    dev->touch_handle = touch_handle;
++}
++
++void * rpusbdisp_usb_get_touchhandle(struct rpusbdisp_dev * dev)
++{
++    return dev->touch_handle;
++}
++
++
++
++static void _status_start_querying(struct rpusbdisp_dev * dev);
++
++
++
++static void _add_usbdev_to_list(struct rpusbdisp_dev * dev)
++{
++    mutex_lock(&_mutex_usbdevlist);
++    list_add( &dev->dev_list_node, &rpusbdisp_list );
++    atomic_inc(&_devlist_count);
++    mutex_unlock(&_mutex_usbdevlist);
++
++    wake_up(&_usblist_waitqueue);
++
++}
++
++
++static void _del_usbdev_from_list(struct rpusbdisp_dev * dev)
++{
++    mutex_lock(&_mutex_usbdevlist);
++    list_del( &dev->dev_list_node );
++    atomic_dec(&_devlist_count);
++    mutex_unlock(&_mutex_usbdevlist);
++}
++
++
++static void _on_parse_status_packet(struct rpusbdisp_dev *dev)
++{
++    rpusbdisp_status_packet_header_t * header = (rpusbdisp_status_packet_header_t *)dev->status_in_buffer;
++
++    if (header->packet_type == RPUSBDISP_STATUS_TYPE_NORMAL) {
++        // only supports the normal status packet currently
++        rpusbdisp_status_normal_packet_t * normalpacket = (rpusbdisp_status_normal_packet_t *)header;
++
++
++
++        if (normalpacket->display_status & RPUSBDISP_DISPLAY_STATUS_DIRTY_FLAG) {
++            fbhandler_set_unsync_flag(dev);
++            schedule_delayed_work(&dev->disp_tickets_pool.completion_work, 0);
++        }
++
++
++        touchhandler_send_ts_event(dev, le32_to_cpu(normalpacket->touch_x), le32_to_cpu(normalpacket->touch_y),  normalpacket->touch_status==RPUSBDISP_TOUCH_STATUS_PRESSED?1:0);
++//        printk("X:%d Y:%d S:%d\n", (int)le32_to_cpu(normalpacket->touch_x), (int)le32_to_cpu(normalpacket->touch_y), normalpacket->touch_status);
++    }
++}
++
++static void _on_display_transfer_finished_delaywork(struct work_struct *work)
++{
++    struct rpusbdisp_dev * dev = container_of(work, struct rpusbdisp_dev,
++					      disp_tickets_pool.completion_work.work);
++
++
++    if (!dev->is_alive) return;
++    fbhandler_on_all_transfer_done(dev);
++}
++
++static void _on_display_transfer_finished(struct urb *urb)
++{
++    struct rpusbdisp_disp_ticket * ticket = (struct rpusbdisp_disp_ticket *)urb->context;
++    struct rpusbdisp_dev         * dev = ticket->binded_dev;
++
++    int                            all_finished = 0;
++	/* sync/async unlink faults aren't errors */
++	if (urb->status) {
++
++        if (dev->is_alive) {
++            // set unsync flag
++		    fbhandler_set_unsync_flag(dev);
++        }
++        err("transmission failed for urb %p, error code %x\n", urb, urb->status);
++
++	}
++
++
++
++    urb->transfer_buffer_length = dev->disp_tickets_pool.packet_size_factor * dev->disp_out_ep_max_size; // reset buffer size
++
++    // insert to the available queue
++    all_finished = _return_disp_tickets(dev, ticket);
++
++    if (all_finished && !urb->status) {
++        schedule_delayed_work(&dev->disp_tickets_pool.completion_work, 0);
++    }
++
++}
++
++static void _on_status_query_finished(struct urb *urb)
++{
++	struct rpusbdisp_dev *dev = urb->context;
++
++    if (!dev->is_alive) {
++        return;
++    }
++
++    // check the status...
++    switch (urb->status) {
++        case 0:
++            // succeed
++            // store the actual transfer size
++            dev->status_in_buffer_recvsize = urb->actual_length;
++
++
++            _on_parse_status_packet(dev);
++            // notify the waiters..
++            wake_up(&dev->status_wait_queue);
++            break;
++        case -EPIPE:
++          //  usb_clear_halt(dev->udev, usb_rcvintpipe(dev->udev, dev->status_in_ep_addr));
++        default:
++            //++dev->urb_status_fail_count;
++            dev->urb_status_fail_count = RPUSBDISP_STATUS_QUERY_RETRY_COUNT;
++    }
++
++    if (dev->urb_status_fail_count < RPUSBDISP_STATUS_QUERY_RETRY_COUNT) {
++        _status_start_querying(dev);
++    }
++}
++
++
++
++static void _status_start_querying(struct rpusbdisp_dev * dev)
++{
++    unsigned int pipe;
++    int status;
++    struct usb_host_endpoint *ep;
++
++
++    if (!dev->is_alive) {
++        // the device is dead, abort
++        return;
++    }
++
++    if (dev->urb_status_fail_count >= RPUSBDISP_STATUS_QUERY_RETRY_COUNT) {
++        // max retry count has reached, return
++        return;
++    }
++
++    pipe = usb_rcvintpipe(dev->udev, dev->status_in_ep_addr);
++    ep = usb_pipe_endpoint(dev->udev, pipe);
++
++    if (!ep) return;
++
++
++    usb_fill_int_urb(dev->urb_status_query, dev->udev, pipe, dev->status_in_buffer, RPUSBDISP_STATUS_BUFFER_SIZE,
++				_on_status_query_finished, dev,
++				ep->desc.bInterval);
++
++    //submit it
++    status = usb_submit_urb(dev->urb_status_query, GFP_ATOMIC);
++    if (status) {
++        if (status == -EPIPE) {
++            usb_clear_halt(dev->udev, pipe);
++        }
++
++        ++ dev->urb_status_fail_count;
++    }
++}
++
++
++static int _sell_disp_tickets(struct rpusbdisp_dev * dev, struct rpusbdisp_disp_ticket_bundle * bundle, size_t required_count)
++{
++    unsigned long irq_flags;
++    int ans = 0;
++    struct list_head *node;
++    // do not sell tickets when the device has been closed
++    if (!dev->is_alive) return 0;
++    if (required_count == 0) {
++        printk("required for zero ?!\n");
++        return 0;
++    }
++    spin_lock_irqsave(&dev->disp_tickets_pool.oplock, irq_flags);
++    do {
++        if (required_count > dev->disp_tickets_pool.availiable_count) {
++            // no enough tickets availiable
++            break;
++        }
++
++        dev->disp_tickets_pool.availiable_count -= required_count;
++
++        bundle->ticket_count = required_count;
++        ans = bundle->ticket_count;
++
++        INIT_LIST_HEAD(&bundle->ticket_list);
++        while(required_count--) {
++            node = dev->disp_tickets_pool.list.next;
++            list_del_init(node);
++            list_add_tail(node, &bundle->ticket_list);
++        }
++    }while(0);
++    spin_unlock_irqrestore(&dev->disp_tickets_pool.oplock,irq_flags);
++    return ans;
++}
++
++
++static int _return_disp_tickets(struct rpusbdisp_dev * dev,  struct  rpusbdisp_disp_ticket * ticket)
++{
++    int all_finished = 0;
++    unsigned long  irq_flags;
++    // insert to the available queue
++
++    spin_lock_irqsave(&dev->disp_tickets_pool.oplock, irq_flags);
++	list_add_tail(&ticket->ticket_list_node, &dev->disp_tickets_pool.list);
++
++    if ( ++dev->disp_tickets_pool.availiable_count == dev->disp_tickets_pool.disp_urb_count) {
++        all_finished = 1;
++    }
++
++	spin_unlock_irqrestore(&dev->disp_tickets_pool.oplock, irq_flags);
++
++
++    wake_up(&dev->disp_tickets_pool.wait_queue);
++    return all_finished;
++}
++
++
++int rpusbdisp_usb_try_copy_area(struct rpusbdisp_dev * dev, int sx, int sy, int dx, int dy, int width, int height)
++{
++
++    struct  rpusbdisp_disp_ticket_bundle bundle;
++    struct  rpusbdisp_disp_ticket * ticket;
++    rpusbdisp_disp_copyarea_packet_t * cmd_copyarea;
++    // only one ticket is enough
++    if (!_sell_disp_tickets(dev, &bundle, 1)) {
++        // tickets is inadequate, try next time
++        return 0;
++    }
++
++    BUG_ON(sizeof(rpusbdisp_disp_copyarea_packet_t) > dev->disp_out_ep_max_size);
++
++    ticket = list_entry(bundle.ticket_list.next, struct  rpusbdisp_disp_ticket, ticket_list_node);
++
++    cmd_copyarea = (rpusbdisp_disp_copyarea_packet_t *)ticket->transfer_urb->transfer_buffer;
++    cmd_copyarea->header.cmd_flag = RPUSBDISP_DISPCMD_COPY_AREA| RPUSBDISP_CMD_FLAG_START;
++
++    cmd_copyarea->sx = cpu_to_le16(sx);
++    cmd_copyarea->sy = cpu_to_le16(sy);
++    cmd_copyarea->dx = cpu_to_le16(dx);
++    cmd_copyarea->dy = cpu_to_le16(dy);
++
++    cmd_copyarea->width= cpu_to_le16(width);
++    cmd_copyarea->height = cpu_to_le16(height);
++
++    //add one more byte to bypass usbdisp 1.03 fw bug
++    ticket->transfer_urb->transfer_buffer_length = sizeof(rpusbdisp_disp_copyarea_packet_t) + 1;
++
++    if (usb_submit_urb(ticket->transfer_urb, GFP_KERNEL)) {
++        // submit failure,
++         _on_display_transfer_finished(ticket->transfer_urb);
++        return 0;
++    }
++
++    return 1;
++
++}
++
++int rpusbdisp_usb_try_draw_rect(struct rpusbdisp_dev * dev, int x, int y, int right, int bottom,  pixel_type_t color, int operation)
++{
++    rpusbdisp_disp_fillrect_packet_t * cmd_fillrect;
++    struct  rpusbdisp_disp_ticket_bundle bundle;
++    struct  rpusbdisp_disp_ticket * ticket;
++
++    // only one ticket is enough
++    if (!_sell_disp_tickets(dev, &bundle, 1)) {
++        // tickets is inadequate, try next time
++        return 0;
++    }
++
++    BUG_ON(sizeof(rpusbdisp_disp_fillrect_packet_t) > dev->disp_out_ep_max_size);
++
++    ticket = list_entry(bundle.ticket_list.next, struct  rpusbdisp_disp_ticket, ticket_list_node);
++
++    cmd_fillrect = (rpusbdisp_disp_fillrect_packet_t *)ticket->transfer_urb->transfer_buffer;
++
++    cmd_fillrect->header.cmd_flag = RPUSBDISP_DISPCMD_RECT | RPUSBDISP_CMD_FLAG_START;
++
++    cmd_fillrect->left = cpu_to_le16(x);
++    cmd_fillrect->top = cpu_to_le16(y);
++    cmd_fillrect->right = cpu_to_le16(right);
++    cmd_fillrect->bottom = cpu_to_le16(bottom);
++
++    cmd_fillrect->color_565 = cpu_to_le16(color);
++    cmd_fillrect->operation = operation;
++
++    ticket->transfer_urb->transfer_buffer_length = sizeof(rpusbdisp_disp_fillrect_packet_t);
++
++    if (usb_submit_urb(ticket->transfer_urb, GFP_KERNEL)) {
++        // submit failure,
++         _on_display_transfer_finished(ticket->transfer_urb);
++        return 0;
++    }
++
++    return 1;
++
++}
++
++
++
++
++
++// context used by the bitblt display packet encoder
++struct bitblt_encoding_context_t {
++    struct  rpusbdisp_disp_ticket_bundle bundle;
++    struct  rpusbdisp_disp_ticket * ticket;
++    struct  list_head * current_node;
++
++    size_t  encoded_pos;
++    size_t  packet_pos;
++    _u8     * urbbuffer ;
++    int     rlemode;
++
++} ;
++
++
++
++static int _bitblt_encoder_init(struct bitblt_encoding_context_t * ctx, struct rpusbdisp_dev * dev, size_t image_size, int rlemode)
++{
++
++    size_t effective_payload_per_packet_size;
++    size_t packet_count;
++    size_t required_tickets_count;
++
++    size_t payload_without_header_size = sizeof(rpusbdisp_disp_bitblt_packet_t) - sizeof(rpusbdisp_disp_packet_header_t)
++                                                 + image_size;
++
++
++
++    if (rlemode) {
++        // the worst case for RLE is 1 extra byte with each 128 pixels (since the 7bit size block can represent 128 uints)
++        payload_without_header_size += (((image_size>>1) + 0x7f)>>7);
++    }
++
++
++    // calc how many tickets are needed ...
++    effective_payload_per_packet_size = dev->disp_out_ep_max_size - sizeof(rpusbdisp_disp_packet_header_t);
++
++    packet_count = (payload_without_header_size + effective_payload_per_packet_size-1) /effective_payload_per_packet_size;
++    required_tickets_count = (packet_count + dev->disp_tickets_pool.packet_size_factor-1) / dev->disp_tickets_pool.packet_size_factor;
++
++
++    if ( required_tickets_count>RPUSBDISP_MAX_TRANSFER_TICKETS_COUNT)
++    {
++        err("required_tickets_count (%d)>RPUSBDISP_MAX_TRANSFER_TICKETS_COUNT(%d)\n", required_tickets_count, RPUSBDISP_MAX_TRANSFER_TICKETS_COUNT);
++       // BUG_ON(1);
++        return 0;
++    }
++
++
++
++    if (!_sell_disp_tickets(dev, &ctx->bundle, required_tickets_count)) {
++        // tickets is inadequate, try next time
++        return 0;
++    }
++
++    // init the context...
++    ctx->packet_pos = 0;
++    ctx->current_node = ctx->bundle.ticket_list.next;
++    ctx->ticket = list_entry(ctx->current_node, struct  rpusbdisp_disp_ticket, ticket_list_node);
++    ctx->urbbuffer = (_u8 *)ctx->ticket->transfer_urb->transfer_buffer;
++    ctx->encoded_pos = 0;
++    ctx->rlemode = rlemode;
++    return 1;
++}
++
++
++static void _bitblt_encode_command_header(struct bitblt_encoding_context_t * ctx, struct rpusbdisp_dev * dev, int x, int y, int right, int bottom, int clear_dirty)
++{
++    rpusbdisp_disp_bitblt_packet_t * bitblt_header ;
++
++    // encoding the command header...
++
++    bitblt_header = (rpusbdisp_disp_bitblt_packet_t *)ctx->urbbuffer;
++    bitblt_header->header.cmd_flag = ctx->rlemode?RPUSBDISP_DISPCMD_BITBLT_RLE:RPUSBDISP_DISPCMD_BITBLT;
++    bitblt_header->header.cmd_flag |= RPUSBDISP_CMD_FLAG_START;
++    if (clear_dirty) {
++        bitblt_header->header.cmd_flag |= RPUSBDISP_CMD_FLAG_CLEARDITY;
++    }
++
++    bitblt_header->x = cpu_to_le16(x);
++    bitblt_header->y = cpu_to_le16(y);
++    bitblt_header->width = cpu_to_le16(right+1-x);
++    bitblt_header->height = cpu_to_le16(bottom+1-y);
++    bitblt_header->operation = RPUSBDISP_OPERATION_COPY;
++
++    ctx->encoded_pos = sizeof(rpusbdisp_disp_bitblt_packet_t);
++
++}
++
++
++static void _bitblt_encoder_cleanup(struct bitblt_encoding_context_t * ctx, struct rpusbdisp_dev * dev)
++{
++    struct  rpusbdisp_disp_ticket * ticket;
++
++    // return unused tickets
++    while (ctx->current_node != &ctx->bundle.ticket_list) {
++
++        ticket = list_entry(ctx->current_node, struct  rpusbdisp_disp_ticket, ticket_list_node);
++        ctx->current_node = ctx->current_node->next;
++
++        _return_disp_tickets(dev, ticket);
++    }
++
++}
++
++static int _bitblt_encoder_flush(struct bitblt_encoding_context_t * ctx, struct rpusbdisp_dev * dev)
++{
++
++
++    // submit the final ticket
++
++    size_t transfer_size = ctx->packet_pos * dev->disp_out_ep_max_size + ctx->encoded_pos;
++
++    if (transfer_size) {
++        ctx->ticket->transfer_urb->transfer_buffer_length = transfer_size;
++
++        ctx->current_node = ctx->current_node->next;
++        if (usb_submit_urb(ctx->ticket->transfer_urb, GFP_KERNEL)) {
++            // submit failure,
++
++            _on_display_transfer_finished(ctx->ticket->transfer_urb);
++            return 0; //abort
++        }
++    }
++
++
++    _bitblt_encoder_cleanup(ctx, dev);
++
++    return 1;
++}
++
++
++static int _bitblt_encode_n_transfer_data(struct bitblt_encoding_context_t * ctx, struct rpusbdisp_dev * dev, const void * data, size_t count)
++{
++    const _u8 * payload_in_bytes = (const _u8 *)data;
++
++    while (count) {
++        // fill the buffer as much as possible...
++        size_t buffer_avail_length = dev->disp_out_ep_max_size - ctx->encoded_pos;
++        size_t size_to_copy = count>buffer_avail_length?buffer_avail_length:count;
++
++        memcpy(ctx->urbbuffer + ctx->encoded_pos, payload_in_bytes, size_to_copy);
++        payload_in_bytes += size_to_copy;
++        ctx->encoded_pos += size_to_copy;
++
++
++        count -= size_to_copy;
++
++        if (buffer_avail_length == size_to_copy) {
++            // current transfer block is full
++            ctx->urbbuffer += dev->disp_out_ep_max_size;
++
++
++            if (++ctx->packet_pos >= dev->disp_tickets_pool.packet_size_factor) {
++                // current urb is full, send the ticket
++                ctx->current_node = ctx->current_node->next;
++                if (usb_submit_urb(ctx->ticket->transfer_urb, GFP_KERNEL)) {
++                    // submit failure,
++
++                    _on_display_transfer_finished(ctx->ticket->transfer_urb);
++                    return 0; //abort
++                }
++
++
++                // a new ticket
++                ctx->packet_pos = 0;
++
++                BUG_ON(ctx->current_node == &ctx->bundle.ticket_list);
++
++                ctx->ticket = list_entry(ctx->current_node, struct  rpusbdisp_disp_ticket, ticket_list_node);
++                ctx->urbbuffer = (_u8 *)ctx->ticket->transfer_urb->transfer_buffer;
++
++            }
++
++            // encoding the header
++            *ctx->urbbuffer = 0;
++            ((rpusbdisp_disp_packet_header_t *)ctx->urbbuffer)->cmd_flag = ctx->rlemode?RPUSBDISP_DISPCMD_BITBLT_RLE:RPUSBDISP_DISPCMD_BITBLT;
++            ctx->encoded_pos = sizeof(rpusbdisp_disp_packet_header_t);
++
++        }
++    }
++
++    return 1;
++}
++
++struct rle_encoder_context {
++    struct bitblt_encoding_context_t * encoder_ctx;
++    int    is_common_section;
++    size_t section_size;
++    pixel_type_t   section_data[128];
++
++};
++
++
++static void _rle_compress_init(struct rle_encoder_context * rle_ctx, struct bitblt_encoding_context_t * encoder_ctx, struct rpusbdisp_dev * dev)
++{
++    rle_ctx->encoder_ctx = encoder_ctx;
++    rle_ctx->is_common_section = 0;
++    rle_ctx->section_size = 0;
++
++}
++
++
++static int _rle_flush_section(struct rle_encoder_context * rle_ctx, struct rpusbdisp_dev * dev)
++{
++
++    // flush the current section ...
++    _u8 section_header;
++    size_t section_data_len;
++
++    BUG_ON(rle_ctx->section_size > RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT + 1);
++
++    if (rle_ctx->section_size == 0) {
++        return 1; //do not flush an empty section...
++    }
++
++
++    section_header = ((rle_ctx->section_size - 1) & RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT);
++    if (rle_ctx->is_common_section) {
++        section_header |= RPUSBDISP_RLE_BLOCKFLAG_COMMON_BIT;
++    }
++    if (!_bitblt_encode_n_transfer_data(rle_ctx->encoder_ctx, dev, &section_header, sizeof(_u8))) {
++        // abort the operation...
++        return 0;
++    }
++
++    section_data_len = rle_ctx->is_common_section? 1:rle_ctx->section_size;
++    if (!_bitblt_encode_n_transfer_data(rle_ctx->encoder_ctx, dev, rle_ctx->section_data, sizeof(pixel_type_t) * section_data_len)) {
++        // abort the operation...
++        return 0;
++    }
++
++
++    // reinit the section
++    rle_ctx->is_common_section = 0;
++    rle_ctx->section_size = 0;
++    return 1;
++}
++
++static int  _rle_compress_n_encode(struct rle_encoder_context * rle_ctx, struct rpusbdisp_dev * dev, pixel_type_t pixel)
++{
++#if RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT + 1 > 128
++#error "RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT + 1 > 128"
++#endif
++    if (rle_ctx->is_common_section) {
++        BUG_ON(rle_ctx->section_size == 0);
++
++        if (pixel != rle_ctx->section_data[0]) {
++            if (!_rle_flush_section(rle_ctx, dev)) {
++                return 0;
++            }
++            rle_ctx->section_size = 1;
++            rle_ctx->section_data[0] = pixel;
++        } else {
++
++            if (rle_ctx->section_size == RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT + 1) {
++                // section is full, flush it...
++
++                if (!_rle_flush_section(rle_ctx, dev)) {
++                    return 0;
++                }
++                rle_ctx->section_size = 1;
++                rle_ctx->section_data[0] = pixel;
++
++            } else {
++                // simply increase the section size...
++                ++ rle_ctx->section_size;
++            }
++        }
++    } else {
++        // check whether the current pixel is equal to the last pixel value...
++
++        if (rle_ctx->section_size && (pixel == rle_ctx->section_data[rle_ctx->section_size-1])) {
++            // remove the last pixel from the current section, flush the section and form a common section
++            --rle_ctx->section_size;
++
++            if (rle_ctx->section_size) {
++                // only flush a section with non-zero data
++                if (!_rle_flush_section(rle_ctx, dev)) {
++                    return 0;
++                }
++            }
++
++            // form a common section
++            rle_ctx->section_size = 2;
++            rle_ctx->section_data[0] = pixel;
++            rle_ctx->is_common_section = 1;
++        } else {
++            if (rle_ctx->section_size == RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT + 1) {
++                // section is full, flush it...
++
++                if (!_rle_flush_section(rle_ctx, dev)) {
++                    return 0;
++                }
++
++            }
++            // include the new data
++            rle_ctx->section_data[rle_ctx->section_size++] = pixel;
++        }
++
++
++    }
++
++
++    return 1;
++}
++
++
++
++int rpusbdisp_usb_try_send_image(struct rpusbdisp_dev * dev, const pixel_type_t * framebuffer, int x, int y, int right, int bottom, int line_width, int clear_dirty)
++{
++    struct bitblt_encoding_context_t encoder_ctx;
++    struct rle_encoder_context       rle_ctx;
++    int    last_copied_x, last_copied_y;
++    int    rlemode;
++
++    // estimate how many tickets are needed
++    const size_t image_size = (right-x + 1)* (bottom-y+1) * (RP_DISP_DEFAULT_PIXEL_BITS/8);
++
++    // do not transmit zero size image
++    if (!image_size) return 1;
++
++    if (dev->device_fwver >= RP_DISP_FEATURE_RLE_FWVERSION) {
++        rlemode = 1;
++    } else {
++        rlemode = 0;
++    }
++
++    if (!_bitblt_encoder_init(&encoder_ctx, dev, image_size, rlemode)) return 0;
++
++    if (rlemode) {
++        _rle_compress_init(&rle_ctx, &encoder_ctx, dev);
++    }
++
++    _bitblt_encode_command_header(&encoder_ctx, dev, x, y, right, bottom, clear_dirty);
++
++    // locate to the begining...
++    framebuffer += (y*line_width + x);
++
++    for (last_copied_y = y; last_copied_y <= bottom; ++last_copied_y) {
++
++        for (last_copied_x = x; last_copied_x <= right; ++last_copied_x) {
++           pixel_type_t current_pixel_le = cpu_to_le16(*framebuffer);
++
++#if (RP_DISP_DEFAULT_PIXEL_BITS/8) != 2
++    #error "only 16bit pixel type is supported"
++#endif
++           if (rlemode) {
++                if (!_rle_compress_n_encode(&rle_ctx, dev, current_pixel_le)) {
++                    _bitblt_encoder_cleanup(&encoder_ctx, dev);
++                    return 0;
++                }
++           } else {
++                if (!_bitblt_encode_n_transfer_data(&encoder_ctx, dev, &current_pixel_le, sizeof(pixel_type_t))) {
++                    // abort the operation...
++
++                    _bitblt_encoder_cleanup(&encoder_ctx, dev);
++                    return 0;
++                }
++           }
++
++           ++framebuffer;
++
++        }
++        framebuffer += line_width - right - 1 + x;
++    }
++
++    if (rlemode) {
++        if (!_rle_flush_section(&rle_ctx, dev)) {
++            _bitblt_encoder_cleanup(&encoder_ctx, dev);
++            return 0;
++        }
++    }
++
++    return _bitblt_encoder_flush(&encoder_ctx, dev);
++
++
++}
++
++static void _on_release_disp_tickets_pool(struct rpusbdisp_dev * dev)
++{
++    unsigned long irq_flags;
++    struct rpusbdisp_disp_ticket * ticket;
++    struct list_head *node;
++    int tickets_count = dev->disp_tickets_pool.disp_urb_count;
++    DEFINE_WAIT(wait);
++
++    dev_info(&dev->interface->dev, "waiting for all tickets to be finished...\n");
++
++
++
++    while(tickets_count) {
++
++        spin_lock_irqsave(&dev->disp_tickets_pool.oplock, irq_flags);
++        if (dev->disp_tickets_pool.availiable_count) {
++            --dev->disp_tickets_pool.availiable_count;
++        } else {
++            spin_unlock_irqrestore(&dev->disp_tickets_pool.oplock,irq_flags);
++            // sleep_on_timeout(&dev->disp_tickets_pool.wait_queue, 2*HZ);
++
++            prepare_to_wait(&dev->disp_tickets_pool.wait_queue, &wait, TASK_UNINTERRUPTIBLE);
++            schedule_timeout(2*HZ);
++            finish_wait(&dev->disp_tickets_pool.wait_queue, &wait);
++            continue;
++        }
++        node = dev->disp_tickets_pool.list.next;
++        list_del_init(node);
++        spin_unlock_irqrestore(&dev->disp_tickets_pool.oplock,irq_flags);
++
++        ticket = list_entry(node, struct rpusbdisp_disp_ticket, ticket_list_node);
++
++		usb_free_coherent(ticket->transfer_urb->dev, RPUSBDISP_MAX_TRANSFER_SIZE,
++				  ticket->transfer_urb->transfer_buffer, ticket->transfer_urb->transfer_dma);
++
++        usb_free_urb(ticket->transfer_urb);
++        kfree(ticket);
++        --tickets_count;
++    }
++
++}
++
++static int _on_alloc_disp_tickets_pool(struct rpusbdisp_dev * dev)
++{
++    struct  rpusbdisp_disp_ticket * newborn;
++    int     actual_allocated = 0;
++    _u8   * transfer_buffer;
++    size_t  packet_size_factor;
++    size_t  ticket_logic_size;
++
++    packet_size_factor = (RPUSBDISP_MAX_TRANSFER_SIZE/dev->disp_out_ep_max_size) ;
++    ticket_logic_size = packet_size_factor * dev->disp_out_ep_max_size ;
++
++
++    spin_lock_init(&dev->disp_tickets_pool.oplock);
++    INIT_LIST_HEAD(&dev->disp_tickets_pool.list);
++
++    while(actual_allocated < RPUSBDISP_MAX_TRANSFER_TICKETS_COUNT) {
++        newborn = kzalloc(sizeof(struct rpusbdisp_disp_ticket), GFP_KERNEL);
++        if (!newborn) {
++            break;
++        }
++
++        newborn->transfer_urb = usb_alloc_urb(0, GFP_KERNEL);
++        if (!newborn->transfer_urb) {
++            kfree(newborn);
++            break;
++        }
++
++
++
++        transfer_buffer = usb_alloc_coherent(dev->udev, RPUSBDISP_MAX_TRANSFER_SIZE, GFP_KERNEL, &newborn->transfer_urb->transfer_dma);
++        if (!transfer_buffer) {
++            usb_free_urb(newborn->transfer_urb);
++            kfree(newborn);
++            break;
++        }
++
++
++        // setup urb
++        usb_fill_bulk_urb(newborn->transfer_urb, dev->udev, usb_sndbulkpipe(dev->udev, dev->disp_out_ep_addr),
++            transfer_buffer, ticket_logic_size, _on_display_transfer_finished, newborn);
++        newborn->transfer_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
++
++
++        newborn->binded_dev = dev;
++
++        dev_info(&dev->interface->dev, "allocated ticket %p with urb %p\n", newborn, newborn->transfer_urb);
++
++
++        list_add_tail(&newborn->ticket_list_node, &dev->disp_tickets_pool.list);
++
++        ++actual_allocated;
++
++    }
++
++    INIT_DELAYED_WORK(&dev->disp_tickets_pool.completion_work, _on_display_transfer_finished_delaywork);
++
++    init_waitqueue_head(&dev->disp_tickets_pool.wait_queue);
++    dev->disp_tickets_pool.disp_urb_count = actual_allocated;
++    dev->disp_tickets_pool.availiable_count = actual_allocated;
++    dev->disp_tickets_pool.packet_size_factor = packet_size_factor;
++    dev_info(&dev->interface->dev, "allocated %d urb tickets for transfering display data. %lu size each\n", actual_allocated, ticket_logic_size);
++
++    return actual_allocated?0:-ENOMEM;
++};
++
++static int _on_new_usb_device(struct rpusbdisp_dev * dev)
++{
++    // the rp-usb-display device has been verified
++    mutex_init(&dev->op_locker);
++    init_waitqueue_head(&dev->status_wait_queue);
++
++
++    dev->urb_status_query = usb_alloc_urb(0, GFP_KERNEL);
++    if (! dev->urb_status_query) {
++        dev_info(&dev->interface->dev, "Cannot allocate status query urbs.\n");
++        goto status_urb_alloc_fail;
++    }
++
++    if (_on_alloc_disp_tickets_pool(dev) < 0) {
++        dev_info(&dev->interface->dev, "Cannot allocate the display tickets pool.\n");
++        goto disp_tickets_alloc_fail;
++    }
++
++
++    _add_usbdev_to_list(dev);
++    dev->dev_id = rpusbdisp_usb_get_device_count();
++    dev->is_alive = 1;
++    dev->device_fwver = le16_to_cpu(dev->udev->descriptor.bcdDevice);
++
++    dev_info(&dev->interface->dev, "RP USB Display found (#%d), Firmware Version: %d.%02d, S/N: %s\n",
++                                dev->dev_id,
++                                (dev->device_fwver>>8),
++                                (dev->device_fwver & 0xFF),
++                                dev->udev->serial?dev->udev->serial:"(unknown)");
++
++
++    // start status querying...
++    _status_start_querying(dev);
++
++    fbhandler_on_new_device(dev);
++    touchhandler_on_new_device(dev);
++
++
++    // force all the image to be flush
++    fbhandler_set_unsync_flag(dev);
++    schedule_delayed_work(&dev->disp_tickets_pool.completion_work, 0);
++    return 0;
++
++disp_tickets_alloc_fail:
++    usb_free_urb(dev->urb_status_query);
++
++status_urb_alloc_fail:
++    return -ENOMEM;
++}
++
++
++static void _on_del_usb_device(struct rpusbdisp_dev * dev)
++{
++
++    mutex_lock(&dev->op_locker);
++    dev->is_alive = 0;
++    mutex_unlock(&dev->op_locker);
++
++    touchhandler_on_remove_device(dev);
++    fbhandler_on_remove_device(dev);
++
++    // kill all pending urbs
++    usb_kill_urb(dev->urb_status_query);
++    cancel_delayed_work_sync(&dev->disp_tickets_pool.completion_work);
++
++
++
++
++    _del_usbdev_from_list(dev);
++
++
++
++    _on_release_disp_tickets_pool(dev);
++
++    usb_free_urb(dev->urb_status_query);
++    dev->urb_status_query = NULL;
++
++    dev_info(&dev->interface->dev, "RP USB Display (#%d) now disconnected\n", dev->dev_id);
++}
++
++
++int rpusbdisp_usb_get_device_count(void)
++{
++    return atomic_read(&_devlist_count);
++}
++
++
++static int rpusbdisp_probe(struct usb_interface *interface, const struct usb_device_id *id)
++{
++
++	struct rpusbdisp_dev *dev = NULL;
++	struct usb_host_interface *iface_desc;
++	struct usb_endpoint_descriptor *endpoint;
++	size_t buffer_size;
++	int i;
++	int retval = -ENOMEM;
++
++	/* allocate memory for our device state and initialize it */
++	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
++	if (dev == NULL) {
++		err("Out of memory");
++		goto error;
++	}
++
++
++	dev->udev = usb_get_dev(interface_to_usbdev(interface));
++	dev->interface = interface;
++
++	if (le16_to_cpu(dev->udev->descriptor.bcdDevice) > 0x0200) {
++		dev_warn(&interface->dev, "The device you used may requires a newer driver version to work.\n");
++	}
++
++    // check for endpoints
++	iface_desc = interface->cur_altsetting;
++	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
++		endpoint = &iface_desc->endpoint[i].desc;
++
++		if (!dev->status_in_ep_addr &&
++		    usb_endpoint_is_int_in(endpoint)) {
++			// the status input endpoint has been found
++			buffer_size = le16_to_cpu(endpoint->wMaxPacketSize);
++			dev->status_in_ep_addr = endpoint->bEndpointAddress;
++
++		}
++
++		if (!dev->disp_out_ep_addr &&
++		    usb_endpoint_is_bulk_out(endpoint) && endpoint->wMaxPacketSize) {
++			// endpoint for video output has been found
++			dev->disp_out_ep_addr = endpoint->bEndpointAddress;
++            dev->disp_out_ep_max_size = le16_to_cpu(endpoint->wMaxPacketSize);
++
++		}
++	}
++
++	if (!(dev->status_in_ep_addr && dev->disp_out_ep_addr)) {
++		err("Could not find the required endpoints\n");
++		goto error;
++	}
++
++
++    /* save our data pointer in this interface device */
++	usb_set_intfdata(interface, dev);
++
++    // add the device to the list
++    if (_on_new_usb_device(dev)) {
++        goto error;
++    }
++
++
++
++#if 0
++
++	/* we can register the device now, as it is ready */
++	retval = usb_register_dev(interface, &rpusbdisp_class);
++	if (retval) {
++		/* something prevented us from registering this driver */
++		err("Not able to get a minor for this device.");
++		usb_set_intfdata(interface, NULL);
++		goto error;
++	}
++
++
++
++	/* let the user know what node this device is now attached to */
++	dev_info(&interface->dev, "The RP USB Display device now attached to RP_USBDISP-%d\n",
++		 interface->minor);
++#endif
++
++	return 0;
++
++error:
++    if (dev) {
++        kfree(dev);
++    }
++	return retval;
++}
++
++
++#if 0
++static void lcd_draw_down(struct usb_lcd *dev)
++{
++	int time;
++
++	time = usb_wait_anchor_empty_timeout(&dev->submitted, 1000);
++	if (!time)
++		usb_kill_anchored_urbs(&dev->submitted);
++}
++#endif
++
++static int rpusbdisp_suspend(struct usb_interface *intf, pm_message_t message)
++{
++	struct usb_lcd *dev = usb_get_intfdata(intf);
++
++	if (!dev)
++		return 0;
++    // not implemented yet
++	return 0;
++}
++
++
++static int rpusbdisp_resume (struct usb_interface *intf)
++{
++    // not implemented yet
++	return 0;
++}
++
++static void rpusbdisp_disconnect(struct usb_interface *interface)
++{
++	struct rpusbdisp_dev *dev;
++
++	dev = usb_get_intfdata(interface);
++	usb_set_intfdata(interface, NULL);
++    _on_del_usb_device(dev);
++
++	kfree(dev);
++}
++
++
++static struct usb_driver usbdisp_driver = {
++	.name       =  RP_DISP_DRIVER_NAME,
++	.probe      =  rpusbdisp_probe,
++	.disconnect =  rpusbdisp_disconnect,
++	.suspend    =  rpusbdisp_suspend,
++	.resume     =  rpusbdisp_resume,
++	.id_table   =  id_table,
++	.supports_autosuspend = 0,
++};
++
++int __init register_usb_handlers(void)
++{
++    // create the status polling task
++
++    _working_flag = 1;
++#if 0
++    _usb_status_polling_task = kthread_run(_kthread_usb_status_poller_proc, NULL, "rpusbdisp_worker%d", 0);
++    if (IS_ERR(_usb_status_polling_task)) {
++        err("Cannot create the kernel worker thread!\n");
++        return -ENOMEM;
++    }
++#endif
++    return usb_register(&usbdisp_driver);
++}
++
++
++void unregister_usb_handlers(void)
++{
++
++    // cancel the worker thread
++    _working_flag = 0;
++    wake_up(&_usblist_waitqueue);
++#if 0
++    if (!IS_ERR(_usb_status_polling_task)){
++        kthread_stop(_usb_status_polling_task);
++    }
++#endif
++
++    usb_deregister(&usbdisp_driver);
++}
++
++
++#if 0
++
++static int _kthread_usb_status_poller_proc(void *data)
++{
++    struct list_head *pos, *q;
++
++    while (_working_flag) {
++
++        if (rpusbdisp_usb_get_device_count() < 1) {
++            // nothing to do , sleep...
++            sleep_on(&_usblist_waitqueue);
++            continue;
++        }
++
++
++        // send usb msg to query the status
++
++        list_for_each_safe( pos, q, &rpusbdisp_list ) {
++            struct rpusbdisp_dev *current_dev;
++            current_dev = list_entry( pos, struct rpusbdisp_dev, dev_list_node );
++
++
++            // send urbs
++
++        }
++
++
++    }
++
++    return 0;
++}
++
++#endif
+\ No newline at end of file
+
+ common.h |   60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/common.h b/drivers/video/robopeak/src/inc/common.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/common.h
+@@ -0,0 +1,60 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *  ----------------------------------------------------------------------
++ *    Common Includes
++ *
++ */
++
++#ifndef _COMMON_INCLUDE_H
++#define _COMMON_INCLUDE_H
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/slab.h>
++#include <linux/errno.h>
++#include <linux/mutex.h>
++#include <asm/uaccess.h>
++#include <linux/usb.h>
++#include <linux/list.h>
++#include <linux/kthread.h>
++#include <linux/platform_device.h>
++#include <linux/string.h>
++#include <linux/delay.h>
++#include <linux/fb.h>
++#include <linux/mm.h>
++#include <linux/vmalloc.h>
++#include <linux/input.h>
++#include <linux/wait.h>
++
++#include "types.h"
++#include "drvconf.h"
++#include "devconf.h"
++
++
++#include "protocol.h"
++
++extern int fps;
++
++// object predefine
++
++struct rpusbdisp_dev;
++
++#ifndef err
++#define err(format,arg...) printk(KERN_ERR format, ## arg)
++#endif
++
++#ifndef info
++#define info(format,arg...) printk(KERN_ERR format, ## arg)
++#endif
++
++
++#endif
+\ No newline at end of file
+
+ devconf.h |   31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/devconf.h b/drivers/video/robopeak/src/inc/devconf.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/devconf.h
+@@ -0,0 +1,31 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *   Device Configurations
++ */
++
++#ifndef _DEVICE_CONF_H
++#define _DEVICE_CONF_H
++
++#define RP_DISP_DRIVER_NAME     "rp-usbdisp"
++
++#define RP_DISP_USB_VENDOR_ID   0xFCCF // RP Pseudo vendor id
++#define RP_DISP_USB_PRODUCT_ID  0xA001
++
++#define RP_DISP_DEFAULT_HEIGHT      240
++#define RP_DISP_DEFAULT_WIDTH       320
++#define RP_DISP_DEFAULT_PIXEL_BITS  16
++typedef _u16  pixel_type_t;
++
++
++#define RP_DISP_FEATURE_RLE_FWVERSION 0x0104
++
++#endif
+
+ drvconf.h |   30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/drvconf.h b/drivers/video/robopeak/src/inc/drvconf.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/drvconf.h
+@@ -0,0 +1,30 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *    Driver Configurations
++ */
++
++#ifndef _DRIVER_CONF_H
++#define _DRIVER_CONF_H
++
++
++#define DRIVER_LICENSE_INFO    "GPL"
++#define DRIVER_VERSION         "RoboPeak USB Display Driver Version 1.00"
++
++#define RPUSBDISP_MINOR		   300
++
++#define RPUSBDISP_STATUS_QUERY_RETRY_COUNT  4
++
++
++#define RPUSBDISP_MAX_TRANSFER_SIZE          (PAGE_SIZE*16 - 512)
++#define RPUSBDISP_MAX_TRANSFER_TICKETS_COUNT 10
++
++#endif
+
+ fbhandlers.h |   29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/fbhandlers.h b/drivers/video/robopeak/src/inc/fbhandlers.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/fbhandlers.h
+@@ -0,0 +1,29 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *    Definition of Frame Buffer Handlers
++ */
++
++#ifndef _RPUSBDISP_FBHANDLERS_H
++#define _RPUSBDISP_FBHANDLERS_H
++
++
++int register_fb_handlers(void);
++void unregister_fb_handlers(void);
++
++
++int fbhandler_on_new_device(struct rpusbdisp_dev * dev);
++void fbhandler_on_remove_device(struct rpusbdisp_dev * dev);
++void fbhandler_on_all_transfer_done(struct rpusbdisp_dev * dev);
++
++void fbhandler_set_unsync_flag(struct rpusbdisp_dev * dev);
++
++#endif
+\ No newline at end of file
+
+ protocol.h |  128 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 128 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/protocol.h b/drivers/video/robopeak/src/inc/protocol.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/protocol.h
+@@ -0,0 +1,128 @@
++/*
++ *  RoboPeak Project
++ *  Copyright 2009 - 2013
++ *
++ *  RP USB Display
++ *  Protocol Def
++ *
++ *  Initial Version by Shikai Chen
++ */
++
++#pragma once
++
++
++#define RPUSBDISP_DISP_CHANNEL_MAX_SIZE    64 //64bytes
++#define RPUSBDISP_STATUS_CHANNEL_MAX_SIZE  32 //32bytes
++
++
++// -- Display Packets
++#define RPUSBDISP_DISPCMD_NOPE             0
++#define RPUSBDISP_DISPCMD_FILL             1
++#define RPUSBDISP_DISPCMD_BITBLT           2
++#define RPUSBDISP_DISPCMD_RECT             3
++#define RPUSBDISP_DISPCMD_COPY_AREA        4
++#define RPUSBDISP_DISPCMD_BITBLT_RLE       5
++
++
++#define RPUSBDISP_OPERATION_COPY            0
++#define RPUSBDISP_OPERATION_XOR             1
++#define RPUSBDISP_OPERATION_OR              2
++#define RPUSBDISP_OPERATION_AND             3
++
++#if defined(_WIN32) || defined(__ICCARM__)
++#pragma pack(1)
++#endif
++
++
++#define RPUSBDISP_CMD_MASK                  (0x3F)
++#define RPUSBDISP_CMD_FLAG_CLEARDITY        (0x1<<6)
++#define RPUSBDISP_CMD_FLAG_START            (0x1<<7)
++typedef struct _rpusbdisp_disp_packet_header_t {
++#if 0
++    _u8 cmd:6;
++    _u8 cleardirty:1;
++    _u8 start:1;
++#else
++    _u8 cmd_flag;
++#endif
++} __attribute__((packed)) rpusbdisp_disp_packet_header_t;
++
++
++typedef struct _rpusbdisp_disp_fill_packet_t {
++    rpusbdisp_disp_packet_header_t header;
++    _u16 color_565;
++} __attribute__((packed)) rpusbdisp_disp_fill_packet_t;
++
++
++typedef struct _rpusbdisp_disp_bitblt_packet_t {
++    rpusbdisp_disp_packet_header_t header;
++    _u16 x;
++    _u16 y;
++    _u16 width;
++    _u16 height;
++    _u8  operation;
++} __attribute__((packed)) rpusbdisp_disp_bitblt_packet_t;
++
++
++typedef struct _rpusbdisp_disp_fillrect_packet_t {
++    rpusbdisp_disp_packet_header_t header;
++    _u16 left;
++    _u16 top;
++    _u16 right;
++    _u16 bottom;
++    _u16 color_565;
++    _u8  operation;
++} __attribute__((packed)) rpusbdisp_disp_fillrect_packet_t;
++
++
++typedef struct _rpusbdisp_disp_copyarea_packet_t {
++    rpusbdisp_disp_packet_header_t header;
++    _u16 sx;
++    _u16 sy;
++    _u16 dx;
++    _u16 dy;
++    _u16 width;
++    _u16 height;
++} __attribute__((packed)) rpusbdisp_disp_copyarea_packet_t;
++
++#if defined(_WIN32) || defined(__ICCARM__)
++#pragma pack()
++#endif
++
++
++// RLE Packet Define
++#define RPUSBDISP_RLE_BLOCKFLAG_COMMON_BIT        0x80
++#define RPUSBDISP_RLE_BLOCKFLAG_SIZE_BIT          0x7f
++
++// -- Status Packets
++
++#define RPUSBDISP_STATUS_TYPE_NORMAL  0
++
++
++#define RPUSBDISP_DISPLAY_STATUS_DIRTY_FLAG   0x80  //a full screen transfer is required
++
++
++#define RPUSBDISP_TOUCH_STATUS_NO_TOUCH       0
++#define RPUSBDISP_TOUCH_STATUS_PRESSED        1
++
++#if defined(_WIN32) || defined(__ICCARM__)
++#pragma pack(1)
++#endif
++
++
++typedef struct _rpusbdisp_status_packet_header_t {
++    _u8 packet_type;
++} __attribute__((packed)) rpusbdisp_status_packet_header_t;
++
++
++typedef struct _rpusbdisp_status_normal_packet_t {
++    rpusbdisp_status_packet_header_t header;
++    _u8 display_status;
++    _u8 touch_status;
++    _s32 touch_x;
++    _s32 touch_y;
++} __attribute__((packed)) rpusbdisp_status_normal_packet_t;
++
++#if defined(_WIN32) || defined(__ICCARM__)
++#pragma pack()
++#endif
+
+ touchhandlers.h |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/touchhandlers.h b/drivers/video/robopeak/src/inc/touchhandlers.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/touchhandlers.h
+@@ -0,0 +1,27 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *    Definition of Touch Event Handlers
++ */
++
++#ifndef _RPUSBDISP_TOUCH_HANDLERS_H
++#define _RPUSBDISP_TOUCH_HANDLERS_H
++
++
++int register_touch_handler(void);
++void unregister_touch_handler(void);
++
++
++int touchhandler_on_new_device(struct rpusbdisp_dev * dev);
++void touchhandler_on_remove_device(struct rpusbdisp_dev * dev);
++
++void touchhandler_send_ts_event(struct rpusbdisp_dev * dev, int x, int y, int touch);
++#endif
+\ No newline at end of file
+
+ types.h |   30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/types.h b/drivers/video/robopeak/src/inc/types.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/types.h
+@@ -0,0 +1,30 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *  ----------------------------------------------------------------------
++ *    Unified Type Def
++ *
++ */
++
++#ifndef RPDRIVER_TYPE_H
++#define RPDRIVER_TYPE_H
++
++
++typedef __u8  _u8;
++typedef __u16 _u16;
++typedef __u32 _u32;
++typedef __u64 _u64;
++
++typedef __s8  _s8;
++typedef __s16 _s16;
++typedef __s32 _s32;
++typedef __s64 _s64;
++
++#endif
+\ No newline at end of file
+
+ usbhandlers.h |   34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/drivers/video/robopeak/src/inc/usbhandlers.h b/drivers/video/robopeak/src/inc/usbhandlers.h
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/src/inc/usbhandlers.h
+@@ -0,0 +1,34 @@
++/*
++ *    RoboPeak USB LCD Display Linux Driver
++ *
++ *    Copyright (C) 2009 - 2013 RoboPeak Team
++ *    This file is licensed under the GPL. See LICENSE in the package.
++ *
++ *    http://www.robopeak.net
++ *
++ *    Author Shikai Chen
++ *
++ *   ---------------------------------------------------
++ *    Definition of USB Driver Handlers
++ */
++
++#ifndef _DRIVER_HANDLER_H
++#define _DRIVER_HANDLER_H
++
++int register_usb_handlers(void);
++void unregister_usb_handlers(void);
++
++int rpusbdisp_usb_get_device_count(void);
++
++struct device * rpusbdisp_usb_get_devicehandle(struct rpusbdisp_dev *);
++void rpusbdisp_usb_set_fbhandle(struct rpusbdisp_dev *, void *);
++void * rpusbdisp_usb_get_fbhandle(struct rpusbdisp_dev * dev);
++
++void   rpusbdisp_usb_set_touchhandle(struct rpusbdisp_dev * dev, void *);
++void * rpusbdisp_usb_get_touchhandle(struct rpusbdisp_dev * dev);
++
++int rpusbdisp_usb_try_send_image(struct rpusbdisp_dev * dev, const pixel_type_t * framebuffer, int x, int y, int right, int bottom, int line_width, int clear_dirty);
++int rpusbdisp_usb_try_draw_rect(struct rpusbdisp_dev * dev, int x, int y, int right, int bottom,  pixel_type_t color, int operation);
++int rpusbdisp_usb_try_copy_area(struct rpusbdisp_dev * dev, int sx, int sy, int dx, int dy, int width, int height);
++
++#endif
+\ No newline at end of file
+
+ 10-disp.conf |   22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/video/robopeak/xserver_conf/10-disp.conf b/drivers/video/robopeak/xserver_conf/10-disp.conf
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/xserver_conf/10-disp.conf
+@@ -0,0 +1,22 @@
++Section "Device"
++         Identifier     "RPUSBDispFB"
++         Driver         "fbdev"
++         Option         "fbdev"   "/dev/fb0"
++EndSection
++
++
++Section "Screen"
++    Identifier "RPUSBDisp"
++    Device "RPUSBDispFB"
++    DefaultFbBpp 16
++    SubSection "Display"
++       Visual "TrueColor"
++    EndSubSection
++EndSection
++
++
++Section "InputClass"
++    Identifier "RPUSBTouch"
++    MatchDevicePath "/dev/input/event*"
++    Driver "evdev"
++EndSection
+
+ README |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/video/robopeak/xserver_conf/README b/drivers/video/robopeak/xserver_conf/README
+new file mode 100644
+--- /dev/null
++++ b/drivers/video/robopeak/xserver_conf/README
+@@ -0,0 +1 @@
++copy the file to /usr/share/X11/xorg.conf.d on Ubuntu system
+

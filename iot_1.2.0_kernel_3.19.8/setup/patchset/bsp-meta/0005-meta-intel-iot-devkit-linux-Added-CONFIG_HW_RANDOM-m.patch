@@ -1,0 +1,41 @@
+From 92fc3970cb1f1cef3daf71046fc0abdefdd7a640 Mon Sep 17 00:00:00 2001
+From: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+Date: Mon, 6 Apr 2015 16:08:30 +0800
+Subject: [PATCH 2/5] meta-intel-iot-devkit: linux: Added CONFIG_HW_RANDOM=m and
+CONFIG_B43_BCMA=m to wlan-broadcom.cfg
+
+Added CONFIG_HW_RANDOM=m and CONFIG_B43_BCMA=m to wlan-broadcom.cfg.
+
+CONFIG_B43_HWRNG requires CONFIG_HW_RANDOM to be enabled in kernel configuration.
+
+CONFIG_B43_PHY_HT requires CONFIG_B43_BCMA to be enabled in kernel configuration.
+
+Signed-off-by: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+---
+ .../linux/linux-yocto-quark/iot-devkit-spi/wlan-broadcom.cfg            | 2 ++
+ .../recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-broadcom.cfg | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-broadcom.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-broadcom.cfg
+index 374fd87..272d58a 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-broadcom.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-broadcom.cfg
+@@ -22,3 +22,5 @@
+ #CONFIG_SSB_SDIOHOST=y
+ #CONFIG_SSB_DRIVER_PCICORE_POSSIBLE=y
+ #CONFIG_SSB_DRIVER_PCICORE=y
++#CONFIG_HW_RANDOM=m
++#CONFIG_B43_BCMA=m
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-broadcom.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-broadcom.cfg
+index 3361e8b..7e08eef 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-broadcom.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-broadcom.cfg
+@@ -22,3 +22,5 @@ CONFIG_SSB_SDIOHOST_POSSIBLE=y
+ CONFIG_SSB_SDIOHOST=y
+ CONFIG_SSB_DRIVER_PCICORE_POSSIBLE=y
+ CONFIG_SSB_DRIVER_PCICORE=y
++CONFIG_HW_RANDOM=m
++CONFIG_B43_BCMA=m
+--
+1.9.1
+

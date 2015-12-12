@@ -1,0 +1,42 @@
+From 605153cd077d466bdde0d493ec8624cecf5d7bd1 Mon Sep 17 00:00:00 2001
+From: Ray Kinsella <ray.kinsella@intel.com>
+Date: Fri, 17 Jul 2015 13:21:24 +0100
+Subject: [PATCH] add option to disable LTO
+
+---
+ configure.ac |   19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 236e2df..af0750f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -217,11 +217,20 @@ CC_CHECK_FLAGS_APPEND([with_cflags], [CFLAGS], [\
+         -fstack-protector-strong \
+         -fPIE \
+         --param=ssp-buffer-size=4])
+-AS_CASE([$CFLAGS], [*-O[[12345\ ]]*],
+-        [CC_CHECK_FLAGS_APPEND([with_cflags], [CFLAGS], [\
+-               -flto -ffat-lto-objects])],
+-        [AC_MSG_RESULT([skipping -flto, optimization not enabled])])
+-AC_SUBST([OUR_CFLAGS], "$with_cflags $sanitizer_cflags")
++
++#Disable LTO
++AC_ARG_ENABLE(lto,
++[AS_HELP_STRING([--enable-lto], [Enable link time optimization])],
++enable_lto=$enableval,
++enable_lto=yes; default_enable_lto=yes)
++
++if test "x$enable_lto" != "xno"; then
++    AS_CASE([$CFLAGS], [*-O[[12345\ ]]*],
++            [CC_CHECK_FLAGS_APPEND([with_cflags], [CFLAGS], [\
++                   -flto -ffat-lto-objects])],
++            [AC_MSG_RESULT([skipping -flto, optimization not enabled])])
++    AC_SUBST([OUR_CFLAGS], "$with_cflags $sanitizer_cflags")
++fi
+
+ AS_CASE([$CFLAGS], [*-O[[12345\ ]]*],
+         [CC_CHECK_FLAGS_APPEND([with_cppflags], [CPPFLAGS], [\
+--
+1.7.10.4
+

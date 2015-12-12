@@ -1,0 +1,29 @@
+From e84566f8f178eae85c4b787089a0ede18b964777 Mon Sep 17 00:00:00 2001
+From: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+Date: Mon, 6 Apr 2015 16:28:18 +0800
+Subject: [PATCH 4/5] meta-intel-iot-devkit: linux: Added
+ CONFIG_USB_MASS_STORAGE=m to usb-eth-gadget.cfg
+
+Added CONFIG_USB_MASS_STORAGE=m to usb-eth-gadget.cfg.
+
+CONFIG_USB_MASS_STORAGE was enabled to modular installation as it was
+disabled by default in kernel configuration for iot-devkit (image-full).
+
+Signed-off-by: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+---
+ .../linux/linux-yocto-quark/iot-devkit/usb-eth-gadget.cfg               | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-eth-gadget.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-eth-gadget.cfg
+index b05042c..50c84d1 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-eth-gadget.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-eth-gadget.cfg
+@@ -1,3 +1,3 @@
+ CONFIG_USB_ETH=m
+ CONFIG_USB_ETH_RNDIS=y
+-CONFIG_USB_MASS_STORAGE=n
+\ No newline at end of file
++CONFIG_USB_MASS_STORAGE=m
+-- 
+1.9.1
+

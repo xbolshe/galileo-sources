@@ -1,0 +1,47 @@
+From d8f98b9784d8fc7be526697a66ec07b7c71cef42 Mon Sep 17 00:00:00 2001
+From: Wong Mun Choy <mun.choy.wong@intel.com>
+Date: Fri, 3 Jul 2015 18:19:56 +0800
+Subject: [PATCH 1/2] meta-intel-galileo: galileo-target: add patch to fix
+ sketch reset
+
+This is to fix the sketch reset button on Galileo boards.
+
+Signed-off-by: Wong Mun Choy <mun.choy.wong@intel.com>
+---
+ .../recipes-galileo/galileo-target/files/r1_2_sketch_reset.patch | 9 +++++++++
+ .../recipes-galileo/galileo-target/galileo-target_0.1.bb         | 3 ++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+ create mode 100644 meta-intel-galileo/recipes-galileo/galileo-target/files/r1_2_sketch_reset.patch
+
+diff --git a/meta-intel-galileo/recipes-galileo/galileo-target/files/r1_2_sketch_reset.patch b/meta-intel-galileo/recipes-galileo/galileo-target/files/r1_2_sketch_reset.patch
+new file mode 100644
+index 0000000..a4c9568
+--- /dev/null
++++ b/meta-intel-galileo/recipes-galileo/galileo-target/files/r1_2_sketch_reset.patch
+@@ -0,0 +1,9 @@
++--- galileo-target-0.1/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh	2015-06-29 02:10:35.770165975 +0800
+++++ galileo-target-0.1-systemd/scripts/opt/cln/galileo/galileo_sketch_reset_script.sh	2015-06-29 02:12:50.950162414 +0800
++@@ -1,4 +1,5 @@
++ #!/bin/sh
++ 
++-systemctl restart galileo-target.service
+++
+++killall -TERM clloader
++ 
+diff --git a/meta-intel-galileo/recipes-galileo/galileo-target/galileo-target_0.1.bb b/meta-intel-galileo/recipes-galileo/galileo-target/galileo-target_0.1.bb
+index 3572ebc..cae1053 100644
+--- a/meta-intel-galileo/recipes-galileo/galileo-target/galileo-target_0.1.bb
++++ b/meta-intel-galileo/recipes-galileo/galileo-target/galileo-target_0.1.bb
+@@ -8,7 +8,8 @@ SRC_URI = "file://galileo-target.tar.bz2 \
+            file://galileo_target_1.0.1_upgrade.patch \
+            file://usb_improv_patch-1.patch \
+            file://autodetect_pins_galileo.patch \
+-           file://galileo-sketch-reset.service"
++           file://galileo-sketch-reset.service \
++	   file://r1_2_sketch_reset.patch"
+ 
+ INSTALLDIR = "/opt/cln/galileo"
+ FILES_${PN} += "${INSTALLDIR} \
+-- 
+1.9.1
+

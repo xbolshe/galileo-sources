@@ -1,0 +1,38 @@
+From ef23144d06b9ed6f723d8fa6bc9b4dd8138d4e75 Mon Sep 17 00:00:00 2001
+From: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+Date: Mon, 6 Apr 2015 16:00:47 +0800
+Subject: [PATCH 1/5] meta-intel-iot-devkit: linux: Added
+ CONFIG_USB_NET_RNDIS_WLAN=m to usb-net.cfg
+
+Added CONFIG_USB_NET_RNDIS_WLAN=m to usb-net.cfg.
+
+CONFIG_USB_USBNET requires CONFIG_USB_NET_RNDIS_WLAN to be enabled in kernel
+configuration.
+
+Signed-off-by: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+---
+ .../recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/usb-net.cfg    | 1 +
+ .../recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-net.cfg        | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/usb-net.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/usb-net.cfg
+index 0501130..69a2e70 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/usb-net.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/usb-net.cfg
+@@ -12,3 +12,4 @@
+ #CONFIG_USB_NET_CDC_SUBSET=m
+ #CONFIG_USB_NET_ZAURUS=m
+ #CONFIG_USB_NET_INT51X1=m
++#CONFIG_USB_NET_RNDIS_WLAN=m
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-net.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-net.cfg
+index 45da619..eb00e49 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-net.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/usb-net.cfg
+@@ -12,3 +12,4 @@ CONFIG_USB_NET_MCS7830=m
+ CONFIG_USB_NET_CDC_SUBSET=m
+ CONFIG_USB_NET_ZAURUS=m
+ CONFIG_USB_NET_INT51X1=m
++CONFIG_USB_NET_RNDIS_WLAN=m
+-- 
+1.9.1
+

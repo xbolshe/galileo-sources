@@ -1,0 +1,191 @@
+Brief
+==================================
+This work is based on original 'meta-clanton_v1.2.0.tar.gz' with several changes:
+ - Linux Kernel is changes from 3.14.28 to 3.19.y
+ - All kernel patches are adapted for Linux Kernel 3.19.8
+ - CY8C9540A PWM range is increased up to 690880 us (or 1.44 Hz) (for Gen1 board only)
+ - Robopeak USB display driver is added
+
+Short instruction:
+
+Compiling environment: VirtualBox, Ubuntu 14.04 LTS
+
+1. Using the root account execute
+     # ./packets.sh
+   to install required packets.
+2. Setup git account. Or use default account like shown below:
+     $ git config --global user.name "user"
+     $ git config --global user.email "user@mail.local"
+3. Using non-root account execute
+     $ ./setup.sh
+4. Execute using non-root account:
+     $ source ./oe-init-build-env build
+5. Edit files as needed
+     ./build/conf/local.conf
+     ./build/conf/bblayers.conf
+6. Go to a directory
+     ./build
+7. Compile it using non-root account
+     $ bitbake image-full
+8. Take files from
+     ./build/tmp/deploy/images/quark
+
+Repository: https://github.com/xbolshe/galileo-sources
+
+
+Overview of Quark Software Release
+==================================
+
+Quark Software Release uses a combolayer script to combine
+multiple git repos to form a Quark SW distro repo that can
+be used for Quark platforms.
+
+The aim of Quark Software Release is to lay down the foundation
+for enabling Quark platforms. To align to Intel IoT Devkit initiative,
+Quark Software Release has been refactored from older Quark repo folder/path
+structure to follow Intel IoT Devkit.
+
+Any developers interested in adopting Intel IoT Devkit repo can
+obtain the repo from:
+    git://git.yoctoproject.org/meta-intel-iot-devkit
+
+As Quark Software Release lays down the foundation for enabling
+Quark platforms, core ingredients such as GRUB, kernel patches & etc
+are also synced into the above Intel IoT Devkit repo regularly.
+
+For developers that are interested in expanding the reference Quark distro
+for other purposes, it is encouraged that developers familiarize with the
+capability of Combo-layer as documented at:
+
+https://wiki.yoctoproject.org/wiki/Combo-layer
+
+In fact, developers can customize setup/combolayer-quark.conf before setup.sh
+script is executed to add in more files, folders or an entire new repo from
+OpenEmbedded to form your own.
+
+The current Quark SW repo dependency is as follows:
+
+URI: git://git.yoctoproject.org/poky.git
+branch: dizzy
+revision: refer to setup/combolayer-quark.conf
+
+URI: git://git.yoctoproject.org/meta-intel-galileo
+branch: master
+revision: refer to setup/combolayer-quark.conf
+
+URI: git://git.yoctoproject.org/meta-intel-iot-devkit
+branch: master
+revision: refer to setup/combolayer-quark.conf
+
+URI: git://git.yoctoproject.org/meta-intel-iot-middleware
+branch: master
+revision: refer to setup/combolayer-quark.conf
+
+URI: git://git.yoctoproject.org/meta-intel-quark
+branch: master
+revision: refer to setup/combolayer-quark.conf
+
+Quark Software Yocto Recipe maintainer:
+- Murphy, Dermot B <dermot.b.murphy@intel.com>
+- Ong, Boon Leong <boon.leong.ong@intel.com>
+- Chang, Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+
+Installation
+============
+1) If you are behind corporate network proxy, please make sure your build machine is
+   properly setup with network proxy information, for example:
+   a) /etc/environment or ~/.bashrc are exporting the following environment variables:
+      - export http_proxy=<proxy server IP|DNS>:<port>
+      - export https_proxy=<proxy server IP|DNS>:<port>
+      - export ftp_proxy=<proxy server IP|DNS>:<port>
+      - export socks_server=<proxy server IP|DNS>:<port>
+   b) ~/.gitconfig or GIT_PROXY_COMMAND is setup to point to proxy command for example:
+      #!/bin/bash
+       exec socat stdio SOCKS:<proxy server's IP|DNS>:$1:$2
+  Note: you can skip the above configuration if you are not behind network proxy.
+
+2) Make sure setup.sh is executable
+  $ chmod +x setup.sh
+
+3) Execute setup.sh script to automatically create Quark Software distro
+  $ ./setup.sh
+  Note: by default a git repo is setup after the new repo is created. If you are not
+  interested to track your development change, you can simply remove ".git" folder.
+
+What is repo-ext folder?
+========================
+As part of the meta layers setup steps, combolayer script is used to fetch in the
+necessary git repo from remote sources into this folder. These repos are used to
+generate the meta layers for building Linux OS for Quark product line.
+
+Starting from Quark v1.2 release, this folder contains linux-stable repo which
+is auto applied with LTSI patches as base too. This Linux kernel base is later
+applied all Linux kernel patches (mixture of cherry-picked up-streamed patches
+and forward-ported out-tree patches) for Quark SW release. By using this approach,
+developer is encouraged to use the git repo as base for kernel patches contribution
+back to Quark SW too. For ensuring linux-yocto-quark under your tmp/work folder
+in synch with this locally hosted Linux kernel repo at repo-ext, developer should
+perform the following steps:
+
+$ bitbake linux-yocto-quark -f -c cleanall && bitbake linux-yocto-quark
+
+Then, follow by the desired target image build as described below.
+
+If developer is expert in using the linux kernel repo within tmp/work folder,
+that is the quickest and most efficient way for kernel development. However,
+developer should take caution in not wiping-out tmp/work folder accidentally.
+Therefore, catering for disastrous mistake-proof, novice developer should use
+repo-ext/linux-stable as Linux kernel development tree.
+
+
+To uninstall software
+=====================
+1) Make sure unsetup.sh script is executable
+   $ chmod +x unsetup.sh
+
+2) Execute unsetup.sh script to automatically to revert your workspace to the original
+   state after the software package is extracted.
+   $ ./unsetup.sh
+
+3) If your intention of unsetup the software is because you want to bring in more ingredients
+   through the modified combolayer-quark.conf, please make sure you backup your previously
+   committed patches on the git repo through "git format-patch". Then, remove the ".git"
+   folder before calling setup.sh to create a new repo again. Finally, reapply your patch changes
+   ontop of the newly created repo through "git am".
+
+Building the software
+=====================
+1) source the repo environment
+   $ source oe-init-build-env build
+  Note: the above step will move your "pwd" to be under "build" folder.
+
+2) To build an SD Card image
+   $ bitbake image-full
+  Note: the output of the build process is located under tmp/deploy/images/quark
+
+3) To build a SPI flash image
+   a) modify "build/conf/local.conf" as follow:
+      DISTRO ?= "iot-devkit-spi"
+      #DISTRO ?= "iot-devkit-multilibc"
+   b) build a SPI flash image
+      $ bitbake image-spi
+
+Contribute to Yocto Recipe Changes
+==================================
+Right now layer is not yet hosted on public git repo. In order to contribute:
+- make sure you have correct user.name/user.email in git config
+- modify desired file
+- git add <desired file>
+- git commit -s # properly document down the patch changes.
+- git format-patch --cover-letter <commit>  -o patch-<description>
+- modify and explain why the patch changes under patch-<description>/0000-cover-letter.patch
+- git send-email --to=dermot.b.murphy@intel.com>  --to=boon.leong.ong@intel.com
+      --confirm=always patch-<description>
+
+Note: if you are using Intel IoT Devkit repo as your base, please send all of your
+patch changes to IoT Devkit Repo maintainer, we also appreciate that the Quark Software
+Distro maintainers are CC'ed in the email too.
+
+- git send-email --to=brendan.le.foll@intel.com
+   --cc=dermot.b.murphy@intel.com>  --cc=boon.leong.ong@intel.com
+   --confirm=always patch-<description>

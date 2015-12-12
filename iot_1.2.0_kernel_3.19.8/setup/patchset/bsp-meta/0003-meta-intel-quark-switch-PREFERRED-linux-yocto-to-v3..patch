@@ -1,0 +1,26 @@
+From 0e9329f6118364d67c52a58e2232bbeaaad64074 Mon Sep 17 00:00:00 2001
+From: Ong Boon Leong <boon.leong.ong@intel.com>
+Date: Tue, 31 Mar 2015 11:38:56 +0800
+Subject: [PATCH 2/2] meta-intel-quark: switch PREFERRED linux-yocto to v3.19
+
+Signed-off-by: Ong Boon Leong <boon.leong.ong@intel.com>
+---
+ meta-intel-quark/conf/machine/quark.conf |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-intel-quark/conf/machine/quark.conf b/meta-intel-quark/conf/machine/quark.conf
+index 0b85b81..8921c23 100644
+--- a/meta-intel-quark/conf/machine/quark.conf
++++ b/meta-intel-quark/conf/machine/quark.conf
+@@ -4,7 +4,7 @@
+ #@DESCRIPTION: Machine configuration for Quark systems
+ 
+ PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto-quark"
+-PREFERRED_VERSION_linux-yocto-quark ?= "3.8%"
++PREFERRED_VERSION_linux-yocto-quark ?= "3.19%"
+ 
+ require conf/machine/include/x86-base.inc
+ include conf/machine/include/tune-i586.inc
+-- 
+1.7.9.5
+

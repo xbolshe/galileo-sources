@@ -1,0 +1,27 @@
+From c0f1ff98d28fbeda52ad5a398b389ba870596a95 Mon Sep 17 00:00:00 2001
+From: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+Date: Tue, 16 Jun 2015 17:22:59 +0800
+Subject: [PATCH] meta-intel-quark: conf: update conf file
+
+Adding compiler CC tune settings to quark.conf in order to strip the LOCK
+prefix system wide.
+
+Suggested-by: Kinsella, Ray <ray.kinsella@intel.com>
+Signed-off-by: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+---
+ meta-intel-quark/conf/machine/quark.conf | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/meta-intel-quark/conf/machine/quark.conf b/meta-intel-quark/conf/machine/quark.conf
+index 8921c23..44fbc35 100644
+--- a/meta-intel-quark/conf/machine/quark.conf
++++ b/meta-intel-quark/conf/machine/quark.conf
+@@ -19,3 +19,5 @@ SERIAL_CONSOLE = "115200 ttyS1"
+ 
+ EXTRA_IMAGEDEPENDS = "grub"
+ PREFERRED_VERSION_grub = "0.97+git%"
++
++TUNE_CCARGS += "-Wa,--momit-lock-prefix=yes"
+-- 
+1.9.1
+

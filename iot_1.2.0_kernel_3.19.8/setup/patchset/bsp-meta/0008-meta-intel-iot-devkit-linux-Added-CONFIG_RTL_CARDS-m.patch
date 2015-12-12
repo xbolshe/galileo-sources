@@ -1,0 +1,47 @@
+From 499e09c934ba6babd8d30e0980c222892b26c769 Mon Sep 17 00:00:00 2001
+From: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+Date: Mon, 6 Apr 2015 16:31:10 +0800
+Subject: [PATCH 5/5] meta-intel-iot-devkit: linux: Added CONFIG_RTL_CARDS=m to
+ wlan-realtek.cfg
+
+Added CONFIG_RTL_CARDS=m to wlan-realtek.cfg.
+
+The follwing kernel configuration depends on CONFIG_RTL_CARDS to be enabled
+in kernel configuration:
+CONFIG_RTLWIFI=m
+CONFIG_RTLWIFI_DEBUG =n
+CONFIG_RTL8723AE=m
+CONFIG_RTL8192SE=m
+CONFIG_RTL8192DE=m
+CONFIG_RTL8192CU=m
+CONFIG_RTL8192CE=m
+CONFIG_RTL8192C_COMMON=m
+CONFIG_RTL8188EE=m
+
+Signed-off-by: YUGERAJ RAMAJAYAM <yugeraj.ramajayam@intel.com>
+---
+ .../linux/linux-yocto-quark/iot-devkit-spi/wlan-realtek.cfg              | 1 +
+ .../recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-realtek.cfg   | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-realtek.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-realtek.cfg
+index 8876217..5a81c9a 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-realtek.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit-spi/wlan-realtek.cfg
+@@ -9,3 +9,4 @@
+ #CONFIG_RTL8192DE=m
+ #CONFIG_RTL8723AE=m
+ #CONFIG_RTL8188EE=m
++#CONFIG_RTL_CARDS=m
+diff --git a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-realtek.cfg b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-realtek.cfg
+index d762950..aa8cb6f 100644
+--- a/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-realtek.cfg
++++ b/meta-intel-iot-devkit/recipes-kernel/linux/linux-yocto-quark/iot-devkit/wlan-realtek.cfg
+@@ -9,3 +9,4 @@ CONFIG_RTL8192SE=m
+ CONFIG_RTL8192DE=m
+ CONFIG_RTL8723AE=m
+ CONFIG_RTL8188EE=m
++CONFIG_RTL_CARDS=m
+-- 
+1.9.1
+

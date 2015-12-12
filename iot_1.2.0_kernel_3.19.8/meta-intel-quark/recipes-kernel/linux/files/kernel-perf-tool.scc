@@ -1,0 +1,5 @@
+include features/latencytop.scc
+include features/lttng.scc
+include features/oprofile.scc
+include features/perf.scc
+include features/powertop.scc

@@ -1,0 +1,40 @@
+From 8ec3bbefb436c4e35001947178571a6f1e1fae3a Mon Sep 17 00:00:00 2001
+From: Ong Boon Leong <boon.leong.ong@intel.com>
+Date: Tue, 19 May 2015 19:30:47 +0800
+Subject: [PATCH] meta-intel-iot-devkit: switch PREFERRED linux-yocto to v3.19
+
+Signed-off-by: Ong Boon Leong <boon.leong.ong@intel.com>
+---
+ meta-intel-iot-devkit/conf/distro/iot-devkit-spi.conf | 2 +-
+ meta-intel-iot-devkit/conf/distro/iot-devkit.conf     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/meta-intel-iot-devkit/conf/distro/iot-devkit-spi.conf b/meta-intel-iot-devkit/conf/distro/iot-devkit-spi.conf
+index b148793..ca94cda 100644
+--- a/meta-intel-iot-devkit/conf/distro/iot-devkit-spi.conf
++++ b/meta-intel-iot-devkit/conf/distro/iot-devkit-spi.conf
+@@ -5,7 +5,7 @@ DISTRO = "iot-devkit-spi"
+ 
+ # poky-tiny forces linux-yocto-tiny otherwise
+ PREFERRED_PROVIDER_virtual/kernel = "linux-yocto-quark"
+-PREFERRED_VERSION_linux-yocto-quark = "3.8%"
++PREFERRED_VERSION_linux-yocto-quark = "3.19%"
+ 
+ VIRTUAL-RUNTIME_dev_manager = ""
+ VIRTUAL-RUNTIME_init_manager = "sysvinit"
+diff --git a/meta-intel-iot-devkit/conf/distro/iot-devkit.conf b/meta-intel-iot-devkit/conf/distro/iot-devkit.conf
+index 8e2e908..c7980e4 100644
+--- a/meta-intel-iot-devkit/conf/distro/iot-devkit.conf
++++ b/meta-intel-iot-devkit/conf/distro/iot-devkit.conf
+@@ -5,7 +5,7 @@ DISTRO = "iot-devkit"
+ DISTRO_FEATURES_append = " systemd"
+ 
+ PREFERRED_PROVIDER_virtual/kernel = "linux-yocto-quark"
+-PREFERRED_VERSION_linux-yocto-quark = "3.8%"
++PREFERRED_VERSION_linux-yocto-quark = "3.19%"
+ #PREFERRED_VERSION_grub = "0.97%"
+ 
+ PREFERRED_PROVIDER_jpeg = "libjpeg-turbo"
+-- 
+1.9.1
+

@@ -1,0 +1,109 @@
+From: Eugene Bolshakov <pub@relvarsoft.com>
+Date: Sun, 6 Dec 2015 10:36:12 +0300
+Subject: [PATCH 0014/9999] Quark: SC SPI
+
+Linux Kernel 3.19 patch for Intel Galileo Gen1/Gen2 board
+Source code is available on https://github.com/xbolshe/galileo-sources
+
+Signed-off-by: Eugene Bolshakov <pub@relvarsoft.com>
+
+
+Original source: 0024-Quark-SC-SPI-quark.patch
+---
+From xxxx Mon Sep 17 00:00:00 2001
+From: Dan O'Donovan <danielx.o'donovan@intel.com>
+Date: Fri, 29 Aug 2014 08:01:41 +0100
+Subject: [PATCH 24/26] Quark SC SPI
+---
+Modifications: changes for Linux Kernel 3.19, additional SPI data rates
+
+ spi-pxa2xx-pci.c |   24 +++++++++++++++++++++++-
+ 1 file changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi-pxa2xx-pci.c b/drivers/spi/spi-pxa2xx-pci.c
+--- a/drivers/spi/spi-pxa2xx-pci.c
++++ b/drivers/spi/spi-pxa2xx-pci.c
+@@ -96,7 +99,7 @@ static struct pxa_spi_info spi_info_configs[] = {
+ 	[PORT_QUARK_X1000] = {
+ 		.type = QUARK_X1000_SSP,
+ 		.port_id = -1,
+-		.num_chipselect = 1,
++		.num_chipselect = 8,
+ 		.max_clk_rate = 50000000,
+ 	},
+ };
+@@ -159,6 +162,7 @@ static int pxa2xx_spi_pci_probe(struct pci_dev *dev,
+ 	}
+ 	ssp->irq = dev->irq;
+ 	ssp->port_id = (c->port_id >= 0) ? c->port_id : dev->devfn;
++	ssp->port_id = PCI_FUNC(ssp->port_id);
+ 	ssp->type = c->type;
+
+ 	snprintf(buf, sizeof(buf), "pxa2xx-spi.%d", ssp->port_id);
+@@ -196,6 +202,23 @@ static void pxa2xx_spi_pci_remove(struct pci_dev *dev)
+ 	clk_unregister(spi_pdata->ssp.clk);
+ }
+
++#ifdef CONFIG_PM
++static int pxa2xx_spi_pci_suspend(struct pci_dev *dev, pm_message_t state)
++{
++	pci_save_state(dev);
++	pci_set_power_state(dev, pci_choose_state(dev, state));
++	return 0;
++}
++
++static int pxa2xx_spi_pci_resume(struct pci_dev *dev)
++{
++	pci_set_power_state(dev, PCI_D0);
++	pci_restore_state(dev);
++
++	return 0;
++}
++#endif
++
+ static const struct pci_device_id pxa2xx_spi_pci_devices[] = {
+ 	{ PCI_VDEVICE(INTEL, 0x2e6a), PORT_CE4100 },
+ 	{ PCI_VDEVICE(INTEL, 0x0935), PORT_QUARK_X1000 },
+@@ -211,6 +234,10 @@ static struct pci_driver pxa2xx_spi_pci_driver = {
+ 	.name           = "pxa2xx_spi_pci",
+ 	.id_table       = pxa2xx_spi_pci_devices,
+ 	.probe          = pxa2xx_spi_pci_probe,
++#ifdef CONFIG_PM
++	.suspend        = pxa2xx_spi_pci_suspend,
++	.resume         = pxa2xx_spi_pci_resume,
++#endif
+ 	.remove         = pxa2xx_spi_pci_remove,
+ };
+
+
+ spi-pxa2xx.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/spi/spi-pxa2xx.c b/drivers/spi/spi-pxa2xx.c
+--- a/drivers/spi/spi-pxa2xx.c
++++ b/drivers/spi/spi-pxa2xx.c
+@@ -85,10 +86,23 @@ struct quark_spi_rate {
+  */
+ static const struct quark_spi_rate quark_spi_rate_table[] = {
+ /*	bitrate,	dds_clk_rate,	clk_div */
++	{100000000,	0xFFFFFF,	0},
++	{87500000,	0xE00000,	0},
++	{75000000,	0xC00000,	0},
++	{62500000,	0xA00000,	0},
+ 	{50000000,	0x800000,	0},
++	{43750000,	0x700000,	0},
+ 	{40000000,	0x666666,	0},
++	{37500000,	0x600000,	0},
++	{34375000,	0x580000,	0},
++	{32812500,	0x540000,	0},
++	{31250000,	0x500000,	0},
++	{29687500,	0x4C0000,	0},
++	{28125000,	0x480000,	0},
++	{26562500,	0x440000,	0},
+ 	{25000000,	0x400000,	0},
+ 	{20000000,	0x666666,	1},
++	{18750000,	0x300000,	0},
+ 	{16667000,	0x800000,	2},
+ 	{13333000,	0x666666,	2},
+ 	{12500000,	0x200000,	0},
+

@@ -1,0 +1,28 @@
+From 7fd792da8f2922515e7cfcecd7deef54269f7f93 Mon Sep 17 00:00:00 2001
+From: Brendan Le Foll <brendan.le.foll@intel.com>
+Date: Fri, 23 May 2014 15:55:45 +0100
+Subject: [PATCH 1/2] dl-elf.c: force ldso to look in lib32:/usr/lib32
+
+Signed-off-by: Brendan Le Foll <brendan.le.foll@intel.com>
+---
+ ldso/ldso/dl-elf.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ldso/ldso/dl-elf.c b/ldso/ldso/dl-elf.c
+index 1b06bc1..62174d3 100644
+--- a/ldso/ldso/dl-elf.c
++++ b/ldso/ldso/dl-elf.c
+@@ -299,8 +299,8 @@ struct elf_resolve *_dl_load_shared_library(unsigned rflags, struct dyn_elf **rp
+ 	   This list must exactly match the list in uClibc/ldso/util/ldd.c */
+ 	_dl_if_debug_dprint("\tsearching full lib path list\n");
+ 	tpnt1 = search_for_named_library(libname, rflags,
+-					UCLIBC_RUNTIME_PREFIX "lib:"
+-					UCLIBC_RUNTIME_PREFIX "usr/lib"
++					UCLIBC_RUNTIME_PREFIX "lib32:"
++					UCLIBC_RUNTIME_PREFIX "usr/lib32"
+ #ifndef __LDSO_CACHE_SUPPORT__
+ 					":" UCLIBC_RUNTIME_PREFIX "usr/X11R6/lib"
+ #endif
+-- 
+1.7.10.4
+

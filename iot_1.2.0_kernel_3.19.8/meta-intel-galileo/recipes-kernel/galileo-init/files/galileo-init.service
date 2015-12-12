@@ -1,0 +1,10 @@
+[Unit]
+Description=Load modules for the Intel galileo
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /usr/sbin/galileo-init.sh
+
+[Install]
+WantedBy=local-fs.target

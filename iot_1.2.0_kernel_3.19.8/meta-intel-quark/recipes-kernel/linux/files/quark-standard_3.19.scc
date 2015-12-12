@@ -1,0 +1,5 @@
+define KMACHINE quark
+define KTYPE standard
+define KARCH i386
+
+kconf hardware quark_3.19.cfg

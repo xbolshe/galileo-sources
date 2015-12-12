@@ -1,0 +1,26 @@
+From 11ef99438560c36b85a49b1f81caa48ff56c0ca7 Mon Sep 17 00:00:00 2001
+From: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+Date: Fri, 22 May 2015 18:43:17 +0800
+Subject: [PATCH] meta-intel-iot-devkit: timedate-scripts: update
+ set-initial-date.service
+
+Changed set-initial-date.service to be available for multi-user.target.
+
+Signed-off-by: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+---
+ .../recipes-support/timedate-scripts/files/set-initial-date.service     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-intel-iot-devkit/recipes-support/timedate-scripts/files/set-initial-date.service b/meta-intel-iot-devkit/recipes-support/timedate-scripts/files/set-initial-date.service
+index 9062322..8e26eda 100644
+--- a/meta-intel-iot-devkit/recipes-support/timedate-scripts/files/set-initial-date.service
++++ b/meta-intel-iot-devkit/recipes-support/timedate-scripts/files/set-initial-date.service
+@@ -7,4 +7,4 @@ Type=oneshot
+ ExecStart=/usr/sbin/set-initial-date
+ 
+ [Install]
+-WantedBy=local-fs.target
++WantedBy=multi-user.target
+-- 
+1.9.1
+

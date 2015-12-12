@@ -1,0 +1,31 @@
+From bde9dcb51db3c109d32205aff7c53ecf13852167 Mon Sep 17 00:00:00 2001
+From: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+Date: Fri, 29 May 2015 10:46:21 +0800
+Subject: [PATCH] setup: bsp-meta: removing dependency layer for
+ meta-openembedded
+
+This patch will remove the dependency layers for meta-openembedded as
+we only require meta-networking/radvd recipe to enable the feature.
+
+Signed-off-by: Chang Rebecca Swee Fun <rebecca.swee.fun.chang@intel.com>
+---
+ meta-openembedded/meta-networking/conf/layer.conf | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/meta-openembedded/meta-networking/conf/layer.conf b/meta-openembedded/meta-networking/conf/layer.conf
+index d99d738..2bf17bc 100644
+--- a/meta-openembedded/meta-networking/conf/layer.conf
++++ b/meta-openembedded/meta-networking/conf/layer.conf
+@@ -14,7 +14,7 @@ BBFILE_PRIORITY_networking-layer = "5"
+ LAYERVERSION_networking-layer = "1"
+ 
+ LAYERDEPENDS_networking-layer = "core"
+-LAYERDEPENDS_networking-layer = "openembedded-layer"
+-LAYERDEPENDS_networking-layer = "meta-python"
++#LAYERDEPENDS_networking-layer = "openembedded-layer"
++#LAYERDEPENDS_networking-layer = "meta-python"
+ 
+ LICENSE_PATH += "${LAYERDIR}/licenses"
+-- 
+1.9.1
+

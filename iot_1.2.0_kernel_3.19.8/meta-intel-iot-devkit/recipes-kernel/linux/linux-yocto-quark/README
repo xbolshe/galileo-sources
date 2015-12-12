@@ -1,0 +1,9 @@
+This folder contains Linux kernel configs that are selected/commented when
+a specific DISTRO choice is selected in build/local.conf. The list of DISTRO
+supported is (as the name of sub-folder suggests):
+ - iot-devkit
+ - iot-devkit-spi
+
+The default Linux kernel configs chosen (per DISTRO) are vastly different.
+The main reason for such is to make sure Linux kernel and rootfs size for
+DISTRO=iot-devkit-spi is sufficiently small to fit into the on-board SPI flash.
