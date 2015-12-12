@@ -1,6 +1,6 @@
 Brief
 ====
-* Base: BSP 1.2.0
+* Base: [BSP 1.2.0](https://downloadcenter.intel.com/download/23197/Intel-Quark-BSP)
 * Kernel: 3.19.y (3.19.8 on 12.12.2015)
 
 
