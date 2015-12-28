@@ -24,6 +24,10 @@ chmod +x setup/combo-layer
 
 Versions
 ====
+
+2015-12-28:
+* Linux Image based on this code and with more features is available [here](https://github.com/xbolshe/galileo-custom-images/tree/master/iot_1.2.0_kernel_3.19.8)
+
 2015-12-12:
 * First public release
 * Linux Image sample based on this code is available [here](https://relvarsoft.com/galileo/galileo_iot_1.2.0_custom_build_xbolshe_kernel_v3.19.8_201512121.zip)
