@@ -10,24 +10,29 @@ Short instruction:
 
 Compiling environment: VirtualBox, Ubuntu 14.04 LTS
 
-1. Using the root account execute
+1. Unzip galileo-sources-master.zip to a folder
+2. $ cd iot_1.2.0_kernel_3.19.8
+3. Add execution rights
+     $ chmod +x *.sh
+     $ chmod +x setup/combo-layer
+4. Using the root account execute
      # ./packets.sh
    to install required packets.
-2. Setup git account. Or use default account like shown below:
+5. Setup git account. Or use default account like shown below:
      $ git config --global user.name "user"
      $ git config --global user.email "user@mail.local"
-3. Using non-root account execute
+6. Using non-root account execute
      $ ./setup.sh
-4. Execute using non-root account:
+7. Execute using non-root account:
      $ source ./oe-init-build-env build
-5. Edit files as needed
+8. Edit files as needed
      ./build/conf/local.conf
      ./build/conf/bblayers.conf
-6. Go to a directory
+9. Go to a directory
      ./build
-7. Compile it using non-root account
+10. Compile it using non-root account
      $ bitbake image-full
-8. Take files from
+11. Take files from
      ./build/tmp/deploy/images/quark
 
 Repository: https://github.com/xbolshe/galileo-sources
