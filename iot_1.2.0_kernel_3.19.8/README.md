@@ -70,8 +70,9 @@ SD Card Linux Images
 
 Samples of SD Card Linux Images based on this code are available to download below:
 
-* Linux Image based on this code and with more features (like NodeJS, SQLite3, MRAA, UPM, etc.) is available [here](https://github.com/xbolshe/galileo-custom-images/tree/master/iot_1.2.0_kernel_3.19.8)
-* Linux Image sample based on this code is available [here](https://relvarsoft.com/galileo/galileo_iot_1.2.0_custom_build_xbolshe_kernel_v3.19.8_201512121.zip)
+* Featured Linux Image based on this code and with more features (like NodeJS, SQLite3, MRAA, UPM, etc.) is available [here](https://github.com/xbolshe/galileo-custom-images/tree/master/iot_1.2.0_kernel_3.19.8)
+* Basic Linux Image based on this code is available [here](galileo_xbolshe_iot_1.2.0_kernel_v3.19.8_basic_201601061.zip)
+
 
 
 xbolshe
