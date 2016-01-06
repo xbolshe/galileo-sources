@@ -3589,14 +3589,14 @@ diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
  obj-$(CONFIG_SERIAL_MSM_SMD)	+= msm_smd_tty.o
  obj-$(CONFIG_SERIAL_MXS_AUART) += mxs-auart.o
 
- intel_quark_uart.c | 2034 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 2034 insertions(+)
+ intel_quark_uart.c | 2042 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 2042 insertions(+)
 
 diff --git a/drivers/tty/serial/intel_quark_uart.c b/drivers/tty/serial/intel_quark_uart.c
 new file mode 100644
 --- /dev/null
 +++ b/drivers/tty/serial/intel_quark_uart.c
-@@ -0,0 +1,2034 @@
+@@ -0,0 +1,2042 @@
 +/*
 + *Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
 + *Copyright (C) 2014 Intel Corporation.
@@ -3947,6 +3947,7 @@ new file mode 100644
 +#endif
 +static unsigned int default_baud = 115200;
 +static bool use_dma = true;
++static int msi = 1;
 +static const int trigger_level_256[4] = { 1, 64, 128, 224 };
 +static const int trigger_level_64[4] = { 1, 16, 32, 56 };
 +static const int trigger_level_16[4] = { 1, 4, 8, 14 };
@@ -5573,6 +5574,10 @@ new file mode 100644
 +	if (ret < 0)
 +		goto probe_error;
 +
++	if(msi == 1){
++		pci_enable_msi(pdev);
++	}
++
 +	priv = quark_uart_init_port(pdev, id);
 +	if (!priv) {
 +		ret = -EBUSY;
@@ -5631,6 +5636,9 @@ new file mode 100644
 +module_param(use_dma, bool, S_IRUGO);
 +MODULE_PARM_DESC(use_dma,
 +                 "Use DMA (default true)");
++module_param(msi, int, S_IRUGO);
++MODULE_PARM_DESC(msi,
++                 "Enable PCI MSI mode");
 
  intel_mid_dma.h |  189 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 189 insertions(+)

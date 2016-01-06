@@ -17,8 +17,8 @@ Subject: [PATCH 19/26] Quark GPIO 2/2
 ---
 Modifications: changes for Linux Kernel 3.19
 
- gpio-sch.c |  526 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 460 insertions(+), 66 deletions(-)
+ gpio-sch.c |  527 +++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 461 insertions(+), 66 deletions(-)
 
 diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
 --- a/drivers/gpio/gpio-sch.c
@@ -228,7 +228,7 @@ diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
  	/*
  	 * according to the datasheet, writing to the level register has no
  	 * effect when GPIO is programmed as input.
-@@ -162,10 +188,210 @@ static int sch_gpio_direction_out(struct gpio_chip *gc, unsigned gpio_num,
+@@ -162,10 +188,211 @@ static int sch_gpio_direction_out(struct gpio_chip *gc, unsigned gpio_num,
  	 * But we cannot prevent a short low pulse if direction is set to high
  	 * and an external pull-up is connected.
  	 */
@@ -372,6 +372,7 @@ diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
 +
 +
 +static struct irq_chip sch_irq = {
++	.name		= "gsi",
 +	.irq_ack		= sch_gpio_irq_ack,
 +	.irq_set_type	= sch_gpio_irq_type,
 +	.irq_enable		= sch_gpio_irq_enable,
@@ -440,7 +441,7 @@ diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
  static struct gpio_chip sch_gpio_chip = {
  	.label			= "sch_gpio",
  	.owner			= THIS_MODULE,
-@@ -173,30 +399,85 @@ static struct gpio_chip sch_gpio_chip = {
+@@ -173,30 +400,85 @@ static struct gpio_chip sch_gpio_chip = {
  	.get			= sch_gpio_get,
  	.direction_output	= sch_gpio_direction_out,
  	.set			= sch_gpio_set,
@@ -535,7 +536,7 @@ diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
 
  	switch (pdev->id) {
  	case PCI_DEVICE_ID_INTEL_SCH_LPC:
-@@ -230,26 +511,139 @@ static int sch_gpio_probe(struct platform_device *pdev)
+@@ -230,26 +512,139 @@ static int sch_gpio_probe(struct platform_device *pdev)
  		sch->chip.ngpio = 30;
  		break;
 
@@ -679,4 +680,3 @@ diff --git a/drivers/gpio/gpio-sch.c b/drivers/gpio/gpio-sch.c
  	},
  	.probe		= sch_gpio_probe,
  	.remove		= sch_gpio_remove,
-

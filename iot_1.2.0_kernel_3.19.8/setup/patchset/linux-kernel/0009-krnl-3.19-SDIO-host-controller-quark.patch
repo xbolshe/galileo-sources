@@ -1,0 +1,53 @@
+From: Eugene Bolshakov <pub@relvarsoft.com>
+Date: Sun, 6 Dec 2015 10:36:12 +0300
+Subject: [PATCH 0009/9999] Quark: SDIO host controller
+
+Linux Kernel 3.19 patch for Intel Galileo Gen1/Gen2 board
+Source code is available on https://github.com/xbolshe/galileo-sources
+
+Signed-off-by: Eugene Bolshakov <pub@relvarsoft.com>
+
+
+ sdhci-pci.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/drivers/mmc/host/sdhci-pci.c b/drivers/mmc/host/sdhci-pci.c
+--- a/sdhci-pci.c
++++ b/sdhci-pci.c
+@@ -31,6 +31,10 @@
+ #include "sdhci-pci.h"
+ #include "sdhci-pci-o2micro.h"
+
++static int msi = 1;
++module_param(msi, int, S_IRUGO);
++MODULE_PARM_DESC(msi, "Enable PCI MSI mode");
++
+ /*****************************************************************************\
+  *                                                                           *
+  * Hardware specific quirk handling                                          *
+@@ -1623,6 +1627,10 @@ static int sdhci_pci_probe(struct pci_dev *pdev,
+ 	if (ret)
+ 		return ret;
+
++	if(msi == 1){
++		pci_enable_msi(pdev);
++	}
++
+ 	chip = kzalloc(sizeof(struct sdhci_pci_chip), GFP_KERNEL);
+ 	if (!chip) {
+ 		ret = -ENOMEM;
+@@ -1670,6 +1678,7 @@ free:
+ 	kfree(chip);
+
+ err:
++	pci_disable_msi(pdev);
+ 	pci_disable_device(pdev);
+ 	return ret;
+ }
+@@ -1692,6 +1701,7 @@ static void sdhci_pci_remove(struct pci_dev *pdev)
+ 		kfree(chip);
+ 	}
+
++	pci_disable_msi(pdev);
+ 	pci_disable_device(pdev);
+ }

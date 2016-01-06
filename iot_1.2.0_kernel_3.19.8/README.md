@@ -25,6 +25,9 @@ chmod +x setup/combo-layer
 Versions
 ====
 
+2016-01-06:
+* Separate device interrupts for UARTs and SDIO host controller
+
 2015-12-28:
 * Linux Image based on this code and with more features is available [here](https://github.com/xbolshe/galileo-custom-images/tree/master/iot_1.2.0_kernel_3.19.8)
 
