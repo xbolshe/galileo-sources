@@ -12,8 +12,8 @@ Signed-off-by: Eugene Bolshakov <pub@relvarsoft.com>
  1 file changed, 10 insertions(+)
 
 diff --git a/drivers/mmc/host/sdhci-pci.c b/drivers/mmc/host/sdhci-pci.c
---- a/sdhci-pci.c
-+++ b/sdhci-pci.c
+--- a/drivers/mmc/host/sdhci-pci.c
++++ b/drivers/mmc/host/sdhci-pci.c
 @@ -31,6 +31,10 @@
  #include "sdhci-pci.h"
  #include "sdhci-pci-o2micro.h"
