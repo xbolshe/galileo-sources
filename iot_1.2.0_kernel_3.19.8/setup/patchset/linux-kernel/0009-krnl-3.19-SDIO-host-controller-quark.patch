@@ -51,3 +51,4 @@ diff --git a/drivers/mmc/host/sdhci-pci.c b/drivers/mmc/host/sdhci-pci.c
 +	pci_disable_msi(pdev);
  	pci_disable_device(pdev);
  }
+
