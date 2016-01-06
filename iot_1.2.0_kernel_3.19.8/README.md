@@ -62,7 +62,7 @@ Compiling
 
 Changelog
 ====
-* Changelog is available [here](https://github.com/xbolshe/galileo-sources/tree/master/iot_1.2.0_kernel_3.19.8/changelog.txt)
+* Changelog is available [here](https://github.com/xbolshe/galileo-sources/tree/master/iot_1.2.0_kernel_3.19.8/changelog.md)
 
 
 SD Card Linux Images
