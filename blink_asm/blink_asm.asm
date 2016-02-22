@@ -83,7 +83,7 @@ _start:
 next:
 	push	ebp
 	
-	;set pin IO13 as HIGH
+	;set pin gpio3 as HIGH
 
 	mov	ebx,str3
 	mov	esi,val1
@@ -97,7 +97,7 @@ next:
 	mov	eax,162
 	int	80h
 	
-	;set pin IO13 as LOW
+	;set pin gpio3 as LOW
 
 	mov	ebx,str3
 	mov	esi,val0
@@ -118,8 +118,8 @@ next:
 
 	;exit
 
-        mov     eax,1
-        int	80h
+	mov	eax,1
+	int	80h
 
 export:
 	push	eax
