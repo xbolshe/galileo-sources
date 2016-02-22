@@ -34,7 +34,7 @@
 ;=============================================================================
 ;
 ;Version 1.0, Feb 2016, xbolshe
-;    - first public release (available on https://github.com/xbolshe/galileo-sources/blink_asm/ )
+;    - first public release (available on https://github.com/xbolshe/galileo-sources/tree/master/blink_asm )
 ;
 ;=============================================================================
 
