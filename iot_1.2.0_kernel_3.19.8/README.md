@@ -13,8 +13,8 @@ Create a folder and execute the following commands using non-root account:
 ``` bash
 sudo apt-get install git
 git init
-git config user.name "user"
-git config user.email "user@mail.local"
+git config --global user.name "user"
+git config --global user.email "user@mail.local"
 git remote add origin https://github.com/xbolshe/galileo-sources.git
 git pull -u origin master
 cd iot_1.2.0_kernel_3.19.8
