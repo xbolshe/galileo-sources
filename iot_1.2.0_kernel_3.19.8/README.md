@@ -11,6 +11,7 @@ Installation using GIT
 Create a folder and execute the following commands using non-root account:
 
 ``` bash
+sudo apt-get install git
 git init
 git config user.name "user"
 git config user.email "user@mail.local"
@@ -19,6 +20,7 @@ git pull -u origin master
 cd iot_1.2.0_kernel_3.19.8
 chmod +x *.sh
 chmod +x setup/combo-layer
+sudo ./packets.sh
 ./setup.sh
 ```
 
