@@ -27,22 +27,16 @@ sudo ./packets.sh
 Manual installation
 ====
 
-Create a folder and execute the following commands using non-root account:
+Create a folder, unzip galileo-sources-master.zip and execute the following commands using non-root account:
 
 ``` bash
-1. Unzip galileo-sources-master.zip to a folder 
-2. $ cd iot_1.2.0_kernel_3.19.8
-3. Add execution rights
-      $ chmod +x *.sh 
-      $ chmod +x setup/combo-layer
-4. Using the root account execute
-      # ./packets.sh
-   to install required packets
-5. Setup git account. Or use default account like shown below:
-      $ git config --global user.name "user"
-      $ git config --global user.email "user@mail.local"
-6. Using non-root account execute
-      $ ./setup.sh
+$ cd iot_1.2.0_kernel_3.19.8
+$ chmod +x *.sh 
+$ chmod +x setup/combo-layer
+$ sudo ./packets.sh
+$ git config --global user.name "user"
+$ git config --global user.email "user@mail.local"
+$ ./setup.sh
 ```
 
 Compiling
