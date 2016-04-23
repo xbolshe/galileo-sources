@@ -8,7 +8,7 @@
 # install required packets #
 ############################
 
-apt-get install gcc make
+apt-get install gcc make patchutils
 apt-get install git gcc-multilib texinfo
 apt-get install diffstat gawk chrpath file
 apt-get install build-essential uuid-dev iasl
